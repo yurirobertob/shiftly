@@ -1,0 +1,248 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum Plan {
+  FREE
+  TRIAL
+  PRO
+}
+
+enum TurnoType {
+  NORMAL
+  EXTRA
+  FDS
+}
+
+enum TarefaStatus {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDA
+  CANCELADA
+}
+
+// ─── Auth.js Standard Entities ────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  image         String?
+  emailVerified DateTime?
+
+  // Stripe (user-level)
+  stripeCustomerId         String?   @unique
+  stripePriceId            String?
+  stripeSubscriptionId     String?   @unique
+  stripeCurrentPeriodEnd   DateTime?
+  trialEndsAt              DateTime?
+  plan                     Plan      @default(FREE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  colaboradores Colaborador[]
+  unidadesGeridas Unidade[] @relation("GestorUnidade")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Product Entities (Shiftly) ───────────────────────────────────────────────
+
+model Empresa {
+  id   String  @id @default(cuid())
+  name String
+  slug String  @unique
+  logo String?
+  plan Plan    @default(TRIAL)
+
+  // Stripe (tenant-level)
+  stripeCustomerId       String?   @unique
+  stripePriceId          String?
+  stripeSubscriptionId   String?   @unique
+  stripeCurrentPeriodEnd DateTime?
+  trialEndsAt            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  unidades      Unidade[]
+  setores       Setor[]
+  colaboradores Colaborador[]
+  cargos        Cargo[]
+  clientes      Cliente[]
+  periodos      Periodo[]
+}
+
+model Unidade {
+  id        String   @id @default(cuid())
+  name      String
+  empresaId String
+  gestorId  String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  gestor        User?         @relation("GestorUnidade", fields: [gestorId], references: [id], onDelete: SetNull)
+  colaboradores Colaborador[]
+  turnos        Turno[]
+  tarefas       Tarefa[]
+  periodos      Periodo[]
+}
+
+model Setor {
+  id        String   @id @default(cuid())
+  name      String
+  empresaId String
+  createdAt DateTime @default(now())
+
+  // Relations
+  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  colaboradores Colaborador[]
+}
+
+model Colaborador {
+  id         String   @id @default(cuid())
+  name       String
+  email      String?
+  phone      String?
+  valorHora  Decimal  @default(0) @db.Decimal(10, 2)
+  bancoHoras Decimal  @default(0) @db.Decimal(10, 2)
+  empresaId  String
+  unidadeId  String?
+  setorId    String?
+  cargoId    String?
+  userId     String?
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  empresa Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  unidade Unidade? @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
+  setor   Setor?   @relation(fields: [setorId], references: [id], onDelete: SetNull)
+  cargo   Cargo?   @relation(fields: [cargoId], references: [id], onDelete: SetNull)
+  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  turnos  Turno[]
+  tarefas Tarefa[]
+}
+
+model Cargo {
+  id            String   @id @default(cuid())
+  name          String
+  valorHoraBase Decimal  @default(0) @db.Decimal(10, 2)
+  empresaId     String
+  createdAt     DateTime @default(now())
+
+  // Relations
+  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  colaboradores Colaborador[]
+}
+
+model Turno {
+  id             String    @id @default(cuid())
+  date           DateTime
+  startTime      DateTime
+  endTime        DateTime
+  type           TurnoType @default(NORMAL)
+  adicional      Decimal   @default(0) @db.Decimal(10, 2)
+  colaboradorId  String
+  unidadeId      String
+  createdAt      DateTime  @default(now())
+
+  // Relations
+  colaborador Colaborador @relation(fields: [colaboradorId], references: [id], onDelete: Cascade)
+  unidade     Unidade     @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+}
+
+model Tarefa {
+  id             String       @id @default(cuid())
+  title          String
+  description    String?      @db.Text
+  type           String?
+  duration       Int          @default(0)
+  status         TarefaStatus @default(PENDENTE)
+  colaboradorId  String?
+  clienteId      String?
+  unidadeId      String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Relations
+  colaborador Colaborador? @relation(fields: [colaboradorId], references: [id], onDelete: SetNull)
+  cliente     Cliente?     @relation(fields: [clienteId], references: [id], onDelete: SetNull)
+  unidade     Unidade?     @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
+}
+
+model Cliente {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  serviceType String?
+  empresaId   String
+  createdAt   DateTime @default(now())
+
+  // Relations
+  empresa Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  tarefas Tarefa[]
+}
+
+model Periodo {
+  id        String   @id @default(cuid())
+  weekStart DateTime
+  weekEnd   DateTime
+  closed    Boolean  @default(false)
+  empresaId String
+  unidadeId String
+  createdAt DateTime @default(now())
+
+  // Relations
+  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+}

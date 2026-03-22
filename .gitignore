@@ -33,15 +33,11 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
-# MCP config (contains API keys)
-.mcp.json
-
-# Claude local settings
-.claude/settings.local.json
-
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+/app/generated/prisma
