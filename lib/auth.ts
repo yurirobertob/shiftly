@@ -44,11 +44,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return true;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id as string;
         token.plan = (user as any).plan as Plan;
         token.trialEndsAt = (user as any).trialEndsAt as Date | null;
+        token.stripeCurrentPeriodEnd = (user as any).stripeCurrentPeriodEnd as Date | null;
+      }
+      // Refresh subscription data from DB on every request
+      if ((trigger === "update" || !user) && token.id) {
+        const dbUser = await db.user.findUnique({
+          where: { id: token.id as string },
+          select: { plan: true, trialEndsAt: true, stripeCurrentPeriodEnd: true },
+        });
+        if (dbUser) {
+          token.plan = dbUser.plan;
+          token.trialEndsAt = dbUser.trialEndsAt;
+          token.stripeCurrentPeriodEnd = dbUser.stripeCurrentPeriodEnd;
+        }
       }
       return token;
     },
@@ -57,6 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = token.id;
         session.user.plan = token.plan;
         session.user.trialEndsAt = token.trialEndsAt;
+        session.user.stripeCurrentPeriodEnd = token.stripeCurrentPeriodEnd;
       }
       return session;
     },

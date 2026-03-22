@@ -7,12 +7,14 @@ declare module "next-auth" {
       id: string;
       plan: Plan;
       trialEndsAt: Date | null;
+      stripeCurrentPeriodEnd: Date | null;
     } & DefaultSession["user"];
   }
 
   interface User {
     plan: Plan;
     trialEndsAt: Date | null;
+    stripeCurrentPeriodEnd: Date | null;
   }
 }
 
@@ -21,5 +23,6 @@ declare module "next-auth/jwt" {
     id: string;
     plan: Plan;
     trialEndsAt: Date | null;
+    stripeCurrentPeriodEnd: Date | null;
   }
 }

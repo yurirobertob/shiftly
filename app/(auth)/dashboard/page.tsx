@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { TrialBanner } from "@/components/trial-banner";
+import { isTrialActive as checkTrial, daysLeftInTrial } from "@/lib/subscription";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -11,23 +13,22 @@ export default async function DashboardPage() {
   }
 
   const { user } = session;
-  const isTrialActive =
-    user.plan === "TRIAL" &&
-    user.trialEndsAt &&
-    new Date(user.trialEndsAt) > new Date();
-  const trialDaysLeft = user.trialEndsAt
-    ? Math.max(
-        0,
-        Math.ceil(
-          (new Date(user.trialEndsAt).getTime() - Date.now()) /
-            (1000 * 60 * 60 * 24)
-        )
-      )
-    : 0;
+  const trialActive = checkTrial({
+    plan: user.plan,
+    trialEndsAt: user.trialEndsAt,
+    stripeCurrentPeriodEnd: user.stripeCurrentPeriodEnd,
+  });
+  const trialDays = daysLeftInTrial({
+    plan: user.plan,
+    trialEndsAt: user.trialEndsAt,
+    stripeCurrentPeriodEnd: user.stripeCurrentPeriodEnd,
+  });
 
   return (
     <div className="mx-auto max-w-4xl p-8">
-      <div className="mb-8">
+      <TrialBanner />
+
+      <div className="mb-8 mt-4">
         <h1 className="text-3xl font-bold tracking-tight">
           Welcome to Shiftly
         </h1>
@@ -39,7 +40,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Plan</CardTitle>
+            <CardTitle className="text-lg">Plano</CardTitle>
           </CardHeader>
           <CardContent>
             <Badge
@@ -47,9 +48,9 @@ export default async function DashboardPage() {
             >
               {user.plan}
             </Badge>
-            {isTrialActive && (
+            {trialActive && (
               <p className="mt-2 text-sm text-muted-foreground">
-                {trialDaysLeft} days remaining in your trial
+                {trialDays} {trialDays === 1 ? "dia restante" : "dias restantes"} no período de teste
               </p>
             )}
           </CardContent>
@@ -57,7 +58,7 @@ export default async function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Account</CardTitle>
+            <CardTitle className="text-lg">Conta</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
             <p>{user.email}</p>
