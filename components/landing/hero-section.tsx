@@ -32,18 +32,13 @@ export function HeroSection() {
   const sealIcons = [Shield, Zap, Clock];
 
   return (
-    <section className="relative overflow-hidden bg-white">
-      {/* Subtle green glow */}
-      <div
-        className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/3 rounded-full opacity-[0.07]"
-        style={{
-          width: 800,
-          height: 600,
-          background:
-            "radial-gradient(ellipse, #1B6545 0%, transparent 70%)",
-          filter: "blur(80px)",
-        }}
-      />
+    <section
+      className="relative overflow-hidden"
+      style={{
+        backgroundImage:
+          "radial-gradient(circle farthest-corner at 10% 20%, rgba(50,172,109,1) 0%, rgba(209,251,155,1) 100.2%)",
+      }}
+    >
 
       <ContainerScroll
         titleComponent={
@@ -55,7 +50,7 @@ export function HeroSection() {
           >
             {/* Badge */}
             <motion.div variants={fadeUp}>
-              <span className="inline-flex items-center rounded-full bg-[#E6F4ED] px-4 py-1.5 text-xs font-medium text-[#1B6545] border border-[#1B6545]/10">
+              <span className="inline-flex items-center rounded-full bg-white/90 backdrop-blur-sm px-4 py-1.5 text-xs font-semibold text-[#0F3F2A] border border-white/60 shadow-sm">
                 {t("hero.badge")}
               </span>
             </motion.div>
@@ -63,10 +58,10 @@ export function HeroSection() {
             {/* Headline */}
             <motion.h1
               variants={fadeUp}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] text-gray-900 max-w-3xl"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] text-[#0F3F2A] max-w-3xl drop-shadow-sm"
             >
               {t("hero.headlinePart1")}{" "}
-              <span className="text-[#1B6545]">
+              <span className="text-white drop-shadow-md">
                 {t("hero.headlineHighlight")}
               </span>
             </motion.h1>
@@ -74,7 +69,7 @@ export function HeroSection() {
             {/* Subheadline */}
             <motion.p
               variants={fadeUp}
-              className="text-base sm:text-lg leading-relaxed text-gray-500 max-w-xl"
+              className="text-base sm:text-lg leading-relaxed text-[#0F3F2A]/80 max-w-xl font-medium"
             >
               {t("hero.subheadline")}
             </motion.p>
@@ -86,13 +81,13 @@ export function HeroSection() {
             >
               <Link
                 href="/login"
-                className="rounded-xl bg-[#1B6545] px-8 py-3.5 text-sm font-semibold text-white hover:bg-[#155236] transition-colors shadow-lg shadow-[#1B6545]/20"
+                className="rounded-xl bg-[#0F3F2A] px-8 py-3.5 text-sm font-semibold text-white hover:bg-[#0A2E1E] transition-colors shadow-lg shadow-[#0F3F2A]/30"
               >
                 {t("hero.ctaPrimary")}
               </Link>
               <a
                 href="#how-it-works"
-                className="rounded-xl border border-gray-200 px-8 py-3.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+                className="rounded-xl bg-white/90 backdrop-blur-sm border border-white px-8 py-3.5 text-sm font-semibold text-[#0F3F2A] hover:bg-white transition-colors shadow-sm"
               >
                 {t("hero.ctaSecondary")}
               </a>
@@ -101,7 +96,7 @@ export function HeroSection() {
             {/* Microcopy */}
             <motion.p
               variants={fadeUp}
-              className="text-sm text-gray-400"
+              className="text-sm text-[#0F3F2A]/70 font-medium"
             >
               {t("hero.microcopy")}
             </motion.p>
@@ -116,9 +111,9 @@ export function HeroSection() {
                 return (
                   <div
                     key={i}
-                    className="flex items-center gap-1.5 text-xs text-gray-400"
+                    className="flex items-center gap-1.5 text-xs text-[#0F3F2A]/80 font-medium"
                   >
-                    <Icon className="h-3.5 w-3.5 text-[#4DAE89]" />
+                    <Icon className="h-3.5 w-3.5 text-[#0F3F2A]" />
                     <span>{seal}</span>
                   </div>
                 );
