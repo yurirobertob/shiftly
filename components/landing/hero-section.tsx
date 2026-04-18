@@ -1,11 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Shield, Zap, Clock } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { DashboardPlaceholder } from "@/components/landing/dashboard-placeholder";
+
+// Three.js aurora shader — loaded client-side only to avoid SSR on WebGL.
+const AuroraFlowBg = dynamic(
+  () => import("@/components/ui/aurora-flow-bg").then((m) => m.AuroraFlowBg),
+  { ssr: false }
+);
 
 const stagger = {
   hidden: {},
@@ -35,11 +42,18 @@ export function HeroSection() {
     <section
       className="relative overflow-hidden"
       style={{
+        // Static fallback gradient — visible before the shader mounts
+        // and behind the canvas on any transparent pixels.
         backgroundImage:
           "radial-gradient(circle farthest-corner at 10% 20%, rgba(50,172,109,1) 0%, rgba(209,251,155,1) 100.2%)",
       }}
     >
+      {/* Animated aurora shader background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <AuroraFlowBg />
+      </div>
 
+      <div className="relative z-10">
       <ContainerScroll
         titleComponent={
           <motion.div
@@ -61,7 +75,7 @@ export function HeroSection() {
               className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] text-[#0F3F2A] max-w-3xl drop-shadow-sm"
             >
               {t("hero.headlinePart1")}{" "}
-              <span className="text-white drop-shadow-md">
+              <span className="text-white drop-shadow-md animate-aurora-glow">
                 {t("hero.headlineHighlight")}
               </span>
             </motion.h1>
@@ -124,6 +138,7 @@ export function HeroSection() {
       >
         <DashboardPlaceholder />
       </ContainerScroll>
+      </div>
     </section>
   );
 }
