@@ -87,14 +87,16 @@ const AuroraBackground = () => {
           float aurora = (flow1 + flow2 + flow3) * 0.33 + 0.5;
           aurora = pow(aurora, 2.0);
 
-          // ─── Green aurora palette (matches hero gradient) ───
-          vec3 deepGreen   = vec3(0.06, 0.28, 0.18);   // #0F4730 forest base
-          vec3 mediumGreen = vec3(0.196, 0.675, 0.427); // rgba(50,172,109)
-          vec3 brightGreen = vec3(0.45, 0.88, 0.58);    // vibrant mid-lime
-          vec3 limeGreen   = vec3(0.82, 0.984, 0.608);  // rgba(209,251,155)
-          vec3 greenAccent = vec3(0.35, 0.82, 0.50);    // saturated green accent
+          // ─── Green aurora palette (clamped to hero gradient range) ───
+          // Floor is locked at rgba(50,172,109) so no patch goes darker
+          // than the original gradient's darker end — text stays legible.
+          vec3 floorGreen  = vec3(0.196, 0.675, 0.427); // rgba(50,172,109) — darkest allowed
+          vec3 mediumGreen = vec3(0.35, 0.78, 0.50);    // slight step up
+          vec3 brightGreen = vec3(0.55, 0.92, 0.62);    // vibrant mid-lime
+          vec3 limeGreen   = vec3(0.82, 0.984, 0.608);  // rgba(209,251,155) — lightest
+          vec3 greenAccent = vec3(0.45, 0.88, 0.58);    // saturated green accent
 
-          vec3 color = deepGreen;
+          vec3 color = floorGreen;
 
           // Medium green flows
           float mediumFlow = smoothstep(0.3, 0.7, aurora + streaks * 0.3);
@@ -106,14 +108,17 @@ const AuroraBackground = () => {
 
           // Lime streaks (the lightest pops)
           float limeFlow = smoothstep(0.8, 1.0, streaks + aurora * 0.5);
-          color = mix(color, limeGreen, limeFlow * 0.75);
+          color = mix(color, limeGreen, limeFlow * 0.85);
 
           // Green accent hints
           float accentFlow = smoothstep(0.7, 0.95, flow3 + streaks * 0.2);
           color = mix(color, greenAccent, accentFlow * 0.5);
 
+          // Final safety clamp: never go darker than floorGreen
+          color = max(color, floorGreen);
+
           // Subtle grain
-          float noise = snoise(uv * 100.0) * 0.02;
+          float noise = snoise(uv * 100.0) * 0.015;
           color += noise;
 
           gl_FragColor = vec4(color, 1.0);

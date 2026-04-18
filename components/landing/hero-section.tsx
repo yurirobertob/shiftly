@@ -72,10 +72,10 @@ export function HeroSection() {
             {/* Headline */}
             <motion.h1
               variants={fadeUp}
-              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] text-[#0F3F2A] max-w-3xl drop-shadow-sm"
+              className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.1] text-[#0A2E1E] max-w-3xl [text-shadow:_0_2px_12px_rgba(255,255,255,0.35)]"
             >
               {t("hero.headlinePart1")}{" "}
-              <span className="text-white drop-shadow-md animate-aurora-glow">
+              <span className="text-white animate-aurora-glow [text-shadow:_0_2px_20px_rgba(10,46,30,0.6)]">
                 {t("hero.headlineHighlight")}
               </span>
             </motion.h1>
@@ -83,7 +83,7 @@ export function HeroSection() {
             {/* Subheadline */}
             <motion.p
               variants={fadeUp}
-              className="text-base sm:text-lg leading-relaxed text-[#0F3F2A]/80 max-w-xl font-medium"
+              className="text-base sm:text-lg leading-relaxed text-[#0A2E1E] max-w-xl font-medium [text-shadow:_0_1px_8px_rgba(255,255,255,0.4)]"
             >
               {t("hero.subheadline")}
             </motion.p>
@@ -110,7 +110,7 @@ export function HeroSection() {
             {/* Microcopy */}
             <motion.p
               variants={fadeUp}
-              className="text-sm text-[#0F3F2A]/70 font-medium"
+              className="text-sm text-[#0A2E1E] font-semibold [text-shadow:_0_1px_6px_rgba(255,255,255,0.45)]"
             >
               {t("hero.microcopy")}
             </motion.p>
@@ -125,9 +125,9 @@ export function HeroSection() {
                 return (
                   <div
                     key={i}
-                    className="flex items-center gap-1.5 text-xs text-[#0F3F2A]/80 font-medium"
+                    className="flex items-center gap-1.5 text-xs text-[#0A2E1E] font-semibold [text-shadow:_0_1px_6px_rgba(255,255,255,0.45)]"
                   >
-                    <Icon className="h-3.5 w-3.5 text-[#0F3F2A]" />
+                    <Icon className="h-3.5 w-3.5 text-[#0A2E1E] drop-shadow-[0_1px_4px_rgba(255,255,255,0.5)]" />
                     <span>{seal}</span>
                   </div>
                 );
