@@ -9,6 +9,10 @@ import { welcomeEmailTemplate } from "@/lib/email-templates";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(db) as any,
+  // Trust the incoming Host header — required when running behind a
+  // custom domain on Vercel so OAuth callbacks resolve to the live host
+  // (shiftsly.com) instead of being rejected as mismatched.
+  trustHost: true,
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
@@ -17,7 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
     Resend({
       apiKey: process.env.AUTH_RESEND_KEY,
-      from: "Shiftsly <noreply@shiftsly.app>",
+      from: "Shiftsly <noreply@shiftsly.com>",
     }),
   ],
   session: {

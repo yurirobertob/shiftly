@@ -67,7 +67,7 @@ async function main() {
   console.log(`✓ ${achievements.length} achievements seeded`);
 
   // 2. Find or skip test user
-  const testEmail = "yuri@shiftsly.app";
+  const testEmail = "yuri@shiftsly.com";
   let user = await prisma.user.findUnique({ where: { email: testEmail } });
   if (!user) {
     user = await prisma.user.create({

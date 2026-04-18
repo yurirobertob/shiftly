@@ -37,7 +37,7 @@ export default function ProfilePage() {
   const { format } = useCurrency();
 
   const userName = session?.user?.name || "Manager";
-  const userEmail = session?.user?.email || "manager@shiftsly.app";
+  const userEmail = session?.user?.email || "manager@shiftsly.com";
   const userImage = session?.user?.image;
   const initials = userName
     .split(" ")
