@@ -1,0 +1,36 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PATH=\"/c/Program Files/nodejs:$PATH\" npm install next-auth@beta @auth/prisma-adapter)",
+      "Bash(PATH=\"/c/Program Files/nodejs:$PATH\" node -e \"console.log\\(require\\(''crypto''\\).randomBytes\\(32\\).toString\\(''base64''\\)\\)\")",
+      "Bash(ls -la \"C:/Users/GamerX/Documents/apporganizacao/app/\\(auth\\)/\")",
+      "Bash(npx next:*)",
+      "Bash(node_modules/.bin/next build:*)",
+      "Bash(where node:*)",
+      "Bash(echo $PATH)",
+      "Bash(export PATH=\"/c/Program Files/nodejs:$PATH\")",
+      "Bash(node node_modules/.bin/next build)",
+      "Bash(node node_modules/next/dist/bin/next build)",
+      "Bash(node node_modules/typescript/bin/tsc --noEmit --pretty)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(taskkill /PID 2724 /F)",
+      "Bash(tasklist)",
+      "Bash(findstr /i \"node\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3000\")",
+      "Bash(findstr \"LISTENING\")",
+      "Bash(taskkill //PID 2724 //F)",
+      "Bash(where npm:*)",
+      "Bash(where npm.cmd)",
+      "Bash(where npx.cmd)",
+      "Bash(npm install:*)",
+      "Bash(taskkill /PID 24424 /F)",
+      "Bash(powershell -Command \"Stop-Process -Id 24424 -Force\")",
+      "Bash(npx vercel:*)",
+      "Bash(ls -la \"C:\\\\Users\\\\GamerX\\\\Documents\\\\apporganizacao\\\\app\\\\\\(auth\\)\"\")",
+      "Bash(npx prisma:*)",
+      "Bash(npx tsx:*)",
+      "Bash(find /c/Users/GamerX/Documents/apporganizacao -path \"*app/\\(dashboard\\)/home*\" -type f)"
+    ]
+  }
+}

@@ -21,7 +21,7 @@ export function AppSidebar() {
         <div className="h-8 w-8 rounded-lg bg-[#2463EB] flex items-center justify-center">
           <span className="text-sm font-bold text-white">S</span>
         </div>
-        <span className="text-lg font-bold">Shiftly</span>
+        <span className="text-lg font-bold">Shiftsly</span>
       </div>
 
       <nav className="flex flex-col gap-1 p-4">

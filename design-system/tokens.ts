@@ -1,5 +1,5 @@
 /**
- * Shiftly Design System Tokens
+ * Shiftsly Design System Tokens
  *
  * Single source of truth for all design tokens used across the app.
  * These get converted to CSS custom properties via generate-css.ts.

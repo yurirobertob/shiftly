@@ -17,7 +17,7 @@ export function PaywallGate({ children, fallback }: PaywallGateProps) {
   const user = {
     plan: session.user.plan,
     trialEndsAt: session.user.trialEndsAt,
-    stripeCurrentPeriodEnd: session.user.stripeCurrentPeriodEnd,
+    currentPeriodEnd: session.user.currentPeriodEnd,
   };
 
   if (hasAccess(user)) {
@@ -51,7 +51,7 @@ export function PaywallGate({ children, fallback }: PaywallGateProps) {
         </h3>
         <p className="mt-2 text-sm text-gray-500">
           Faça upgrade para o plano Pro e continue usando todos os recursos do
-          Shiftly sem limitações.
+          Shiftsly sem limitações.
         </p>
         <Link
           href="/settings/billing"

@@ -1,14 +1,13 @@
-import type { Plan } from "@/app/generated/prisma/client";
+import type { SubscriptionPlan } from "@prisma/client";
 
 interface UserSubscription {
-  plan: Plan;
+  plan: SubscriptionPlan;
   trialEndsAt: Date | string | null;
-  stripeCurrentPeriodEnd: Date | string | null;
+  currentPeriodEnd: Date | string | null;
 }
 
 export function isTrialActive(user: UserSubscription): boolean {
   return (
-    user.plan === "TRIAL" &&
     user.trialEndsAt !== null &&
     new Date(user.trialEndsAt) > new Date()
   );
@@ -16,9 +15,9 @@ export function isTrialActive(user: UserSubscription): boolean {
 
 export function isSubscribed(user: UserSubscription): boolean {
   return (
-    user.plan === "PRO" &&
-    user.stripeCurrentPeriodEnd !== null &&
-    new Date(user.stripeCurrentPeriodEnd) > new Date()
+    (user.plan === "PRO" || user.plan === "PLUS") &&
+    user.currentPeriodEnd !== null &&
+    new Date(user.currentPeriodEnd) > new Date()
   );
 }
 

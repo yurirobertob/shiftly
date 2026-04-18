@@ -10,12 +10,12 @@ export async function POST() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
+  const subscription = await db.subscription.findUnique({
+    where: { userId: session.user.id },
     select: { stripeCustomerId: true },
   });
 
-  if (!user?.stripeCustomerId) {
+  if (!subscription?.stripeCustomerId) {
     return NextResponse.json(
       { error: "No Stripe customer found" },
       { status: 400 }
@@ -23,7 +23,7 @@ export async function POST() {
   }
 
   const portalSession = await createCustomerPortalSession(
-    user.stripeCustomerId
+    subscription.stripeCustomerId
   );
 
   return NextResponse.json({ url: portalSession.url });

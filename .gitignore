@@ -48,3 +48,8 @@ app/generated/
 
 # Prisma config env
 .env
+
+.vercel
+
+# storybook
+/storybook-static

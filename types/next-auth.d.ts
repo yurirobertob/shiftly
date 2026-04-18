@@ -1,28 +1,28 @@
 import { DefaultSession, DefaultJWT } from "next-auth";
-import { Plan } from "../app/generated/prisma/client";
+import { SubscriptionPlan } from "@prisma/client";
 
 declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      plan: Plan;
+      plan: SubscriptionPlan;
       trialEndsAt: Date | null;
-      stripeCurrentPeriodEnd: Date | null;
+      currentPeriodEnd: Date | null;
     } & DefaultSession["user"];
   }
 
   interface User {
-    plan: Plan;
+    plan: SubscriptionPlan;
     trialEndsAt: Date | null;
-    stripeCurrentPeriodEnd: Date | null;
+    currentPeriodEnd: Date | null;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    plan: Plan;
+    plan: SubscriptionPlan;
     trialEndsAt: Date | null;
-    stripeCurrentPeriodEnd: Date | null;
+    currentPeriodEnd: Date | null;
   }
 }

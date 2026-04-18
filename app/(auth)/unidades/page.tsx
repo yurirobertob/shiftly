@@ -1,165 +1,99 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { PaywallGate } from "@/components/paywall-gate";
-import { TrialBanner } from "@/components/trial-banner";
-
-const EMPRESA_ID = "";
-
-interface Unidade {
-  id: string;
-  name: string;
-  gestor: { name: string } | null;
-  _count: { colaboradores: number };
-}
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Search,
+  Plus,
+  MapPin,
+  Users,
+  Layers,
+  UserCircle,
+} from "lucide-react";
+import { unidades } from "@/lib/mock-data";
 
 export default function UnidadesPage() {
-  const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const { data: unidades = [], isLoading } = useQuery<Unidade[]>({
-    queryKey: ["unidades", EMPRESA_ID],
-    queryFn: async () => {
-      if (!EMPRESA_ID) return [];
-      const res = await fetch(`/api/unidades?empresaId=${EMPRESA_ID}`);
-      if (!res.ok) return [];
-      return res.json();
-    },
-    enabled: !!EMPRESA_ID,
-  });
-
-  const createMutation = useMutation({
-    mutationFn: async (data: { name: string; empresaId: string }) => {
-      const res = await fetch("/api/unidades", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) throw new Error("Failed to create");
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["unidades"] });
-      setShowForm(false);
-      setName("");
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`/api/unidades/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["unidades"] });
-    },
-  });
+  const filtered = searchTerm
+    ? unidades.filter((u) =>
+        u.name.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : unidades;
 
   return (
-    <PaywallGate>
-      <div className="p-8">
-        <TrialBanner />
-
-        <div className="mt-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Unidades</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Gerencie as filiais e unidades da sua operação
-            </p>
-          </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="rounded-lg bg-[#2463EB] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4fc7] transition-colors"
-          >
-            {showForm ? "Cancelar" : "Nova unidade"}
-          </button>
+    <div className="p-4 md:p-6 lg:p-8">
+      {/* Header */}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Unidades</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Gerencie as filiais e unidades da sua operação
+          </p>
         </div>
+        <Button size="sm">
+          <Plus className="h-4 w-4 mr-1" />
+          Nova unidade
+        </Button>
+      </div>
 
-        {showForm && (
-          <Card className="mt-4">
-            <CardContent className="pt-6">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  createMutation.mutate({ name, empresaId: EMPRESA_ID });
-                }}
-                className="flex gap-3"
-              >
-                <input
-                  type="text"
-                  placeholder="Nome da unidade"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="flex-1 rounded-lg border px-3 py-2 text-sm"
-                />
-                <button
-                  type="submit"
-                  disabled={createMutation.isPending}
-                  className="rounded-lg bg-[#2463EB] px-4 py-2 text-sm font-medium text-white hover:bg-[#1d4fc7] disabled:opacity-50"
-                >
-                  {createMutation.isPending ? "Salvando..." : "Salvar"}
-                </button>
-              </form>
-            </CardContent>
-          </Card>
-        )}
-
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {isLoading ? (
-            <p className="text-sm text-muted-foreground">Carregando...</p>
-          ) : !EMPRESA_ID ? (
-            <Card className="col-span-full">
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">
-                  Crie uma empresa primeiro para gerenciar unidades.
-                </p>
-              </CardContent>
-            </Card>
-          ) : unidades.length === 0 ? (
-            <Card className="col-span-full">
-              <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">
-                  Nenhuma unidade cadastrada.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            unidades.map((u) => (
-              <Card key={u.id}>
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-semibold">{u.name}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {u._count.colaboradores} colaboradores
-                      </p>
-                      {u.gestor && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Gestor: {u.gestor.name}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => {
-                        if (confirm("Excluir unidade?")) {
-                          deleteMutation.mutate(u.id);
-                        }
-                      }}
-                      className="text-red-500 hover:text-red-700 text-xs"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+      {/* Search */}
+      <div className="mb-6 max-w-sm">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Buscar unidade..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8"
+          />
         </div>
       </div>
-    </PaywallGate>
+
+      {/* Units grid */}
+      {filtered.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <p className="text-muted-foreground">
+              Nenhuma unidade encontrada.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((u) => (
+            <Card key={u.id} className="hover:ring-2 hover:ring-[#2463EB]/20 transition-all cursor-pointer">
+              <CardContent className="py-4">
+                <div className="mb-3 flex items-start justify-between">
+                  <h3 className="text-base font-semibold">{u.name}</h3>
+                  <Badge variant="secondary">{u.collaboratorCount} colab.</Badge>
+                </div>
+                <div className="space-y-2 text-sm text-gray-500">
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+                    <span>{u.address}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                    <span>{u.collaboratorCount} colaboradores</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Layers className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                    <span>{u.sectors.join(", ")}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <UserCircle className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+                    <span>Gestor: {u.manager}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }

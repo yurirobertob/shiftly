@@ -15,8 +15,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shiftly - Shift Management",
-  description: "Manage your shifts with ease",
+  title: "Shiftsly — Stop managing your cleaners on WhatsApp",
+  description: "Schedule the week in minutes, know exactly what you'll pay each cleaner, and never be caught off guard when someone calls in sick.",
+  openGraph: {
+    title: "Shiftsly — The scheduling tool for cleaning managers",
+    description: "Built for cleaning managers in London. Bilingual PT/EN. Schedule, pay, and manage your cleaning team in one place.",
+    url: "https://apporganizacao.vercel.app",
+    siteName: "Shiftsly",
+    locale: "en_GB",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Shiftsly — Stop managing your cleaners on WhatsApp",
+    description: "Schedule, pay, and manage your cleaning team in one place.",
+  },
 };
 
 export default function RootLayout({

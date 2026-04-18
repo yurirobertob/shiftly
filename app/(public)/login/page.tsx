@@ -41,7 +41,7 @@ export default function LoginPage() {
             className="text-3xl font-bold tracking-tight"
             style={{ color: "#2463EB" }}
           >
-            Shiftly
+            Shiftsly
           </h1>
           <p className="mt-2 text-sm text-gray-600">
             Manage your shifts with ease

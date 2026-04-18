@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { clienteSchema } from "@/lib/validations";
+import { clientSchema } from "@/lib/validations";
 
 export async function GET(
   _request: Request,
@@ -14,16 +14,13 @@ export async function GET(
     }
 
     const { id } = await params;
-    const cliente = await db.cliente.findUnique({
-      where: { id },
-      include: { tarefas: true },
-    });
+    const client = await db.client.findUnique({ where: { id } });
 
-    if (!cliente) {
+    if (!client || client.userId !== session.user.id) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(cliente);
+    return NextResponse.json(client);
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -41,18 +38,18 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const parsed = clienteSchema.partial().safeParse(body);
+    const parsed = clientSchema.partial().safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const cliente = await db.cliente.update({
+    const client = await db.client.update({
       where: { id },
       data: parsed.data,
     });
 
-    return NextResponse.json(cliente);
+    return NextResponse.json(client);
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -69,7 +66,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    await db.cliente.delete({ where: { id } });
+    await db.client.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

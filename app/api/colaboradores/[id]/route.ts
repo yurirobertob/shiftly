@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { colaboradorSchema } from "@/lib/validations";
+import { cleanerSchema } from "@/lib/validations";
 
 export async function GET(
   _request: Request,
@@ -14,16 +14,13 @@ export async function GET(
     }
 
     const { id } = await params;
-    const colaborador = await db.colaborador.findUnique({
-      where: { id },
-      include: { unidade: true, setor: true, cargo: true },
-    });
+    const cleaner = await db.cleaner.findUnique({ where: { id } });
 
-    if (!colaborador) {
+    if (!cleaner || cleaner.userId !== session.user.id) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(colaborador);
+    return NextResponse.json(cleaner);
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -41,18 +38,18 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
-    const parsed = colaboradorSchema.partial().safeParse(body);
+    const parsed = cleanerSchema.partial().safeParse(body);
 
     if (!parsed.success) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const colaborador = await db.colaborador.update({
+    const cleaner = await db.cleaner.update({
       where: { id },
       data: parsed.data,
     });
 
-    return NextResponse.json(colaborador);
+    return NextResponse.json(cleaner);
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -69,7 +66,7 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    await db.colaborador.delete({ where: { id } });
+    await db.cleaner.delete({ where: { id } });
 
     return NextResponse.json({ success: true });
   } catch (error) {

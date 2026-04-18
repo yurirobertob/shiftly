@@ -1,6 +1,6 @@
 generator client {
-  provider = "prisma-client"
-  output   = "../app/generated/prisma"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
@@ -10,23 +10,47 @@ datasource db {
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-enum Plan {
-  FREE
-  TRIAL
+enum SubscriptionPlan {
+  BASIC
   PRO
+  PLUS
 }
 
-enum TurnoType {
-  NORMAL
-  EXTRA
-  FDS
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
 }
 
-enum TarefaStatus {
-  PENDENTE
-  EM_ANDAMENTO
-  CONCLUIDA
-  CANCELADA
+enum CleanerStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum WeekStatus {
+  DRAFT
+  ACTIVE
+  CLOSED
+}
+
+enum JobStatus {
+  SCHEDULED
+  COMPLETED
+  ABSENT
+  CANCELLED
+  UNCOVERED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
 }
 
 // ─── Auth.js Standard Entities ────────────────────────────────────────────────
@@ -38,22 +62,35 @@ model User {
   image         String?
   emailVerified DateTime?
 
-  // Stripe (user-level)
-  stripeCustomerId         String?   @unique
-  stripePriceId            String?
-  stripeSubscriptionId     String?   @unique
-  stripeCurrentPeriodEnd   DateTime?
-  trialEndsAt              DateTime?
-  plan                     Plan      @default(FREE)
+  // Gamification
+  xp    Int @default(0)
+  level Int @default(1)
+
+  // Profile
+  phone     String?
+  address   String?
+  company   String?
+  role      String?  @default("manager")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  accounts      Account[]
-  sessions      Session[]
-  colaboradores Colaborador[]
-  unidadesGeridas Unidade[] @relation("GestorUnidade")
+  // Auth relations
+  accounts Account[]
+  sessions Session[]
+
+  // Gamification relations
+  userAchievements UserAchievement[]
+
+  // Shiftsly business relations
+  cleaners          Cleaner[]
+  clients           Client[]
+  scheduleTemplates ScheduleTemplate[]
+  weeklySchedules   WeeklySchedule[]
+  absences          Absence[]
+  paymentSummaries  PaymentSummary[]
+  subscription      Subscription?
+  servicePrices     ServicePrice[]
 }
 
 model Account {
@@ -92,157 +129,249 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ─── Product Entities (Shiftly) ───────────────────────────────────────────────
+// ─── Shiftsly Business Entities ────────────────────────────────────────────────
 
-model Empresa {
-  id   String  @id @default(cuid())
-  name String
-  slug String  @unique
-  logo String?
-  plan Plan    @default(TRIAL)
+model Cleaner {
+  id          String        @id @default(cuid())
+  userId      String
+  name        String
+  email       String?
+  phone       String?
+  hourlyRate  Decimal       @default(15.00) @db.Decimal(10, 2)
+  status      CleanerStatus @default(ACTIVE)
+  avatarColor String?       @db.VarChar(7)
+  notes       String?       @db.Text
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
-  // Stripe (tenant-level)
-  stripeCustomerId       String?   @unique
-  stripePriceId          String?
-  stripeSubscriptionId   String?   @unique
-  stripeCurrentPeriodEnd DateTime?
-  trialEndsAt            DateTime?
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rates          CleanerRate[]
+  templateSlots  TemplateSlot[]
+  jobs           Job[]
+  absences       Absence[]
+  coveredAbsences Absence[]       @relation("CoveredBy")
+  paymentSummaries PaymentSummary[]
 
+  @@unique([userId, email])
+  @@index([userId])
+}
+
+model CleanerRate {
+  id             String    @id @default(cuid())
+  cleanerId      String
+  hourlyRate     Decimal   @db.Decimal(10, 2)
+  effectiveFrom  DateTime  @db.Date
+  effectiveUntil DateTime? @db.Date
+  createdAt      DateTime  @default(now())
+
+  cleaner Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+
+  @@index([cleanerId])
+}
+
+model Client {
+  id           String       @id @default(cuid())
+  userId       String
+  name         String
+  address      String?      @db.Text
+  contactName  String?
+  contactPhone String?      @db.VarChar(50)
+  notes        String?      @db.Text
+  status       ClientStatus @default(ACTIVE)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  templateSlots TemplateSlot[]
+  jobs          Job[]
+
+  @@index([userId])
+}
+
+model ScheduleTemplate {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   @default("Default")
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
-  unidades      Unidade[]
-  setores       Setor[]
-  colaboradores Colaborador[]
-  cargos        Cargo[]
-  clientes      Cliente[]
-  periodos      Periodo[]
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slots TemplateSlot[]
+
+  @@index([userId])
 }
 
-model Unidade {
-  id        String   @id @default(cuid())
-  name      String
-  empresaId String
-  gestorId  String?
-  createdAt DateTime @default(now())
-
-  // Relations
-  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  gestor        User?         @relation("GestorUnidade", fields: [gestorId], references: [id], onDelete: SetNull)
-  colaboradores Colaborador[]
-  turnos        Turno[]
-  tarefas       Tarefa[]
-  periodos      Periodo[]
-}
-
-model Setor {
-  id        String   @id @default(cuid())
-  name      String
-  empresaId String
-  createdAt DateTime @default(now())
-
-  // Relations
-  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  colaboradores Colaborador[]
-}
-
-model Colaborador {
+model TemplateSlot {
   id         String   @id @default(cuid())
-  name       String
-  email      String?
-  phone      String?
-  valorHora  Decimal  @default(0) @db.Decimal(10, 2)
-  bancoHoras Decimal  @default(0) @db.Decimal(10, 2)
-  empresaId  String
-  unidadeId  String?
-  setorId    String?
-  cargoId    String?
-  userId     String?
-  active     Boolean  @default(true)
+  templateId String
+  cleanerId  String
+  clientId   String
+  dayOfWeek  Int      @db.SmallInt // 0=Monday ... 6=Sunday
+  startTime  String   @db.VarChar(5) // "09:00"
+  endTime    String   @db.VarChar(5) // "13:00"
   createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
 
-  // Relations
-  empresa Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  unidade Unidade? @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
-  setor   Setor?   @relation(fields: [setorId], references: [id], onDelete: SetNull)
-  cargo   Cargo?   @relation(fields: [cargoId], references: [id], onDelete: SetNull)
-  user    User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  turnos  Turno[]
-  tarefas Tarefa[]
+  template ScheduleTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  cleaner  Cleaner          @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+  client   Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, cleanerId, dayOfWeek, startTime])
+  @@index([templateId])
 }
 
-model Cargo {
+model WeeklySchedule {
+  id             String     @id @default(cuid())
+  userId         String
+  weekStart      DateTime   @db.Date // always a Monday
+  status         WeekStatus @default(DRAFT)
+  totalCost      Decimal?   @db.Decimal(10, 2)
+  totalJobs      Int?
+  totalAbsences  Int?       @default(0)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs             Job[]
+  paymentSummaries PaymentSummary[]
+
+  @@unique([userId, weekStart])
+  @@index([userId])
+}
+
+model Job {
+  id                    String    @id @default(cuid())
+  scheduleId            String
+  cleanerId             String?   // NULL = uncovered
+  clientId              String
+  date                  DateTime  @db.Date
+  startTime             String    @db.VarChar(5) // "09:00"
+  endTime               String    @db.VarChar(5) // "13:00"
+  status                JobStatus @default(SCHEDULED)
+  hoursWorked           Decimal?  @db.Decimal(4, 2)
+  hourlyRate            Decimal?  @db.Decimal(10, 2) // snapshot
+  cost                  Decimal?  @db.Decimal(10, 2) // hoursWorked × hourlyRate
+  notes                 String?   @db.Text
+  createdFromTemplate   Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  schedule WeeklySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  cleaner  Cleaner?       @relation(fields: [cleanerId], references: [id], onDelete: SetNull)
+  client   Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([scheduleId])
+  @@index([cleanerId])
+  @@index([clientId])
+  @@index([date])
+  @@index([status])
+}
+
+model ServicePrice {
   id            String   @id @default(cuid())
-  name          String
-  valorHoraBase Decimal  @default(0) @db.Decimal(10, 2)
-  empresaId     String
+  userId        String
+  serviceType   String   @db.VarChar(50) // "standard", "deep", "post-construction", "airbnb", "other"
+  priceBRL      Decimal  @db.Decimal(10, 2)
+  priceUSD      Decimal  @db.Decimal(10, 2)
+  priceGBP      Decimal  @db.Decimal(10, 2)
+  priceEUR      Decimal  @db.Decimal(10, 2)
   createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  // Relations
-  empresa       Empresa       @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  colaboradores Colaborador[]
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, serviceType])
+  @@index([userId])
 }
 
-model Turno {
-  id             String    @id @default(cuid())
-  date           DateTime
-  startTime      DateTime
-  endTime        DateTime
-  type           TurnoType @default(NORMAL)
-  adicional      Decimal   @default(0) @db.Decimal(10, 2)
-  colaboradorId  String
-  unidadeId      String
-  createdAt      DateTime  @default(now())
+model Absence {
+  id           String   @id @default(cuid())
+  cleanerId    String
+  userId       String
+  date         DateTime @db.Date
+  reason       String?  @db.Text
+  jobsAffected Int      @default(0)
+  covered      Boolean  @default(false)
+  coveredById  String?
+  createdAt    DateTime @default(now())
 
-  // Relations
-  colaborador Colaborador @relation(fields: [colaboradorId], references: [id], onDelete: Cascade)
-  unidade     Unidade     @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  cleaner   Cleaner  @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coveredBy Cleaner? @relation("CoveredBy", fields: [coveredById], references: [id], onDelete: SetNull)
+
+  @@unique([cleanerId, date])
+  @@index([cleanerId])
+  @@index([date])
 }
 
-model Tarefa {
-  id             String       @id @default(cuid())
-  title          String
-  description    String?      @db.Text
-  type           String?
-  duration       Int          @default(0)
-  status         TarefaStatus @default(PENDENTE)
-  colaboradorId  String?
-  clienteId      String?
-  unidadeId      String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+model PaymentSummary {
+  id             String        @id @default(cuid())
+  userId         String
+  scheduleId     String
+  cleanerId      String
+  totalHours     Decimal       @default(0) @db.Decimal(6, 2)
+  totalJobs      Int           @default(0)
+  totalAbsences  Int           @default(0)
+  totalAmount    Decimal       @default(0) @db.Decimal(10, 2)
+  status         PaymentStatus @default(PENDING)
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
-  // Relations
-  colaborador Colaborador? @relation(fields: [colaboradorId], references: [id], onDelete: SetNull)
-  cliente     Cliente?     @relation(fields: [clienteId], references: [id], onDelete: SetNull)
-  unidade     Unidade?     @relation(fields: [unidadeId], references: [id], onDelete: SetNull)
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  schedule WeeklySchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  cleaner  Cleaner        @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, cleanerId])
+  @@index([scheduleId])
+  @@index([cleanerId])
 }
 
-model Cliente {
+model Subscription {
+  id                    String             @id @default(cuid())
+  userId                String             @unique
+  stripeCustomerId      String?
+  stripeSubscriptionId  String?
+  plan                  SubscriptionPlan   @default(BASIC)
+  status                SubscriptionStatus @default(ACTIVE)
+  maxCleaners           Int                @default(5)
+  currentPeriodStart    DateTime?
+  currentPeriodEnd      DateTime?
+  trialEndsAt           DateTime?
+  cancelAtPeriodEnd     Boolean            @default(false)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+}
+
+// ─── Gamification ──────────────────────────────────────────────────────────────
+
+model Achievement {
   id          String   @id @default(cuid())
-  name        String
-  address     String?
-  serviceType String?
-  empresaId   String
+  slug        String   @unique
+  title       String
+  description String
+  category    String
+  xpReward    Int      @default(25)
+  icon        String
   createdAt   DateTime @default(now())
 
-  // Relations
-  empresa Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  tarefas Tarefa[]
+  userAchievements UserAchievement[]
 }
 
-model Periodo {
-  id        String   @id @default(cuid())
-  weekStart DateTime
-  weekEnd   DateTime
-  closed    Boolean  @default(false)
-  empresaId String
-  unidadeId String
-  createdAt DateTime @default(now())
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime @default(now())
+  notified      Boolean  @default(false)
 
-  // Relations
-  empresa Empresa @relation(fields: [empresaId], references: [id], onDelete: Cascade)
-  unidade Unidade @relation(fields: [unidadeId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, achievementId])
 }

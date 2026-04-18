@@ -1,49 +1,38 @@
-import type { Plan } from "@/app/generated/prisma/client";
+import type { SubscriptionPlan } from "@prisma/client";
 import { db } from "@/lib/db";
 
-export const PLAN_LIMITS = {
-  FREE: {
-    colaboradores: 0,
-    unidades: 0,
-    clientes: 0,
-  },
-  TRIAL: {
-    colaboradores: 30,
-    unidades: 3,
-    clientes: 50,
+export const PLAN_LIMITS: Record<SubscriptionPlan, { cleaners: number; clients: number }> = {
+  BASIC: {
+    cleaners: 5,
+    clients: 10,
   },
   PRO: {
-    colaboradores: 30,
-    unidades: 3,
-    clientes: 50,
+    cleaners: 15,
+    clients: 50,
   },
-  SCALE: {
-    colaboradores: Infinity,
-    unidades: Infinity,
-    clientes: Infinity,
+  PLUS: {
+    cleaners: 30,
+    clients: 100,
   },
 } as const;
 
-type Resource = keyof (typeof PLAN_LIMITS)["TRIAL"];
+type Resource = "cleaners" | "clients";
 
 export async function checkUsageLimit(
-  empresaId: string,
-  plan: Plan,
+  userId: string,
+  plan: SubscriptionPlan,
   resource: Resource
 ): Promise<{ allowed: boolean; current: number; limit: number }> {
-  const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.FREE;
+  const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.BASIC;
   const limit = limits[resource];
 
   let current = 0;
   switch (resource) {
-    case "colaboradores":
-      current = await db.colaborador.count({ where: { empresaId, active: true } });
+    case "cleaners":
+      current = await db.cleaner.count({ where: { userId, status: { not: "INACTIVE" } } });
       break;
-    case "unidades":
-      current = await db.unidade.count({ where: { empresaId } });
-      break;
-    case "clientes":
-      current = await db.cliente.count({ where: { empresaId } });
+    case "clients":
+      current = await db.client.count({ where: { userId, status: "ACTIVE" } });
       break;
   }
 

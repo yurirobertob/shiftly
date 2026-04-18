@@ -12,7 +12,7 @@ export function TrialBanner() {
   const user = {
     plan: session.user.plan,
     trialEndsAt: session.user.trialEndsAt,
-    stripeCurrentPeriodEnd: session.user.stripeCurrentPeriodEnd,
+    currentPeriodEnd: session.user.currentPeriodEnd,
   };
 
   if (!isTrialActive(user)) return null;
