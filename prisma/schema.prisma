@@ -375,3 +375,28 @@ model UserAchievement {
 
   @@unique([userId, achievementId])
 }
+
+// ─── Usability Testing ─────────────────────────────────────────────────────────
+
+model UsabilityResponse {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  name               String
+  experienceYears    String
+  currentTools       String[]
+  currentToolsOther  String?
+  completedWeek      String
+  weekBlocker        String?
+  weekEasiest        String?
+  weekHardest        String?
+  quitMoment         String?
+  exploredSections   String[]
+  brokenFeature      String?
+  missingFeature     String?
+  dailyPainPoint     String?
+  oneWordDescription String?
+  visualHelped       String
+  npsScore           Int
+  npsReason          String?
+  oneChange          String?
+}
