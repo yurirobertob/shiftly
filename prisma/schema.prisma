@@ -376,6 +376,29 @@ model UserAchievement {
   @@unique([userId, achievementId])
 }
 
+// ─── Growth Agent (Telegram insights) ──────────────────────────────────────────
+
+model Insight {
+  id            String    @id @default(cuid())
+  templateId    String    @db.VarChar(80)
+  category      String    @db.VarChar(40)
+  title         String
+  body          String    @db.Text
+  evidence      Json      @default("[]")
+  effort        String    @db.VarChar(1)  // S | M | L
+  impact        String    @db.VarChar(1)  // L | M | H
+  score         Float
+  funnelStage   String?   @db.VarChar(20)
+  status        String    @default("sent") @db.VarChar(20) // sent | ack | doing | done | dismissed
+  telegramMsgId Int?
+  sentAt        DateTime  @default(now())
+  actedAt       DateTime?
+
+  @@index([templateId, sentAt])
+  @@index([category, sentAt])
+  @@index([status])
+}
+
 // ─── Usability Testing ─────────────────────────────────────────────────────────
 
 model UsabilityResponse {
