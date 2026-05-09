@@ -44,6 +44,9 @@ import { ServicosHoje } from "@/components/dashboard/servicos-hoje";
 import { DiaristasHoje } from "@/components/dashboard/diaristas-hoje";
 import { ServicosSemanaChart } from "@/components/dashboard/servicos-semana-chart";
 import { RotasFAB } from "@/components/rotas-ativas/rotas-fab";
+import { AlertBanner } from "@/components/shiftsly/alert-banner";
+import { WeekStrip, type WeekDay, type DayStatus } from "@/components/shiftsly/week-strip";
+import { ScheduleCarousel } from "@/components/shiftsly/schedule-carousel";
 import { useLanguage } from "@/hooks/use-language";
 import { useCurrency } from "@/hooks/use-currency";
 import { getAvatarColor } from "@/lib/avatar-color";
@@ -1384,6 +1387,12 @@ function DashboardContent() {
   const [selectedCleanerId, setSelectedCleanerId] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [popoverCell, setPopoverCell] = useState<{ cleanerId: string; dayIdx: number } | null>(null);
+  const [carouselDate, setCarouselDate] = useState(() => new Date(weekStart + "T00:00:00"));
+
+  // Sync carousel to selected week when week navigation changes
+  useEffect(() => {
+    setCarouselDate(new Date(weekStart + "T00:00:00"));
+  }, [weekStart]);
   const dayCellRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
   const [assignJobId, setAssignJobId] = useState<string | null>(null);
   const [extraRows, setExtraRows] = useState(2); // placeholder rows in filled schedule
@@ -1575,6 +1584,54 @@ function DashboardContent() {
     }).length,
     hoje: weekDates[i]?.date === todayStr,
   }));
+
+  // ─── Carousel data ────────────────────────────────────────────────────────
+  const carouselDays = weekDates.map((wd) => new Date(wd.date + "T00:00:00"));
+
+  const weekStripDays: WeekDay[] = weekDates.map((wd, i) => {
+    const dayJobs = jobs.filter((j) => {
+      const ds = typeof j.date === "string" ? j.date.split("T")[0] : j.date;
+      return ds === wd.date;
+    });
+    const hasAbsence = absencesData?.some((a) => a.date === wd.date) ?? false;
+    const hasUncovered = (uncoveredDays[i]?.length ?? 0) > 0;
+    const status: DayStatus =
+      dayJobs.length === 0 ? "empty"
+      : hasAbsence || hasUncovered ? "alert"
+      : dayJobs.every((j) => j.status === "COMPLETED") ? "complete"
+      : "partial";
+    return { date: new Date(wd.date + "T00:00:00"), status };
+  });
+
+  const carouselEmployees = (cleanersData ?? []).map((c) => ({
+    id: c.id,
+    name: c.name,
+  }));
+
+  const carouselSchedule = jobs
+    .filter((j) => !!j.cleanerId && j.status !== "CANCELLED")
+    .map((j) => ({
+      date: typeof j.date === "string" ? j.date.split("T")[0] : String(j.date),
+      employeeId: j.cleanerId!,
+      scheduled: j.status !== "ABSENT",
+    }));
+
+  async function handleCarouselToggle(date: Date, employeeId: string, scheduled: boolean) {
+    const dateStr = date.toISOString().split("T")[0];
+    if (!scheduled) {
+      await registerAbsenceMut.mutateAsync({ cleanerId: employeeId, date: dateStr });
+    } else {
+      toast.info(
+        language === "pt"
+          ? "Para adicionar serviços, use o modo desktop"
+          : "To add services, switch to desktop view"
+      );
+    }
+  }
+
+  const firstAbsenceAlert = absencesData?.[0];
+  const firstUncoveredJob = Object.values(uncoveredDays).flat()[0];
+  // ──────────────────────────────────────────────────────────────────────────
 
   const servicosHojeData = (todayJobs ?? []).slice(0, 5).map((j) => ({
     id: j.id,
@@ -1769,6 +1826,65 @@ function DashboardContent() {
           )}
         </div>
 
+        {/* ─── Alerts (mobile + desktop) ─── */}
+        {firstAbsenceAlert && (
+          <AlertBanner
+            type="warning"
+            title={language === "pt" ? "Ausência registrada" : "Absence registered"}
+            message={
+              language === "pt"
+                ? `${firstAbsenceAlert.cleaner.name} está ausente${absencesData!.length > 1 ? ` + ${absencesData!.length - 1} outra(s)` : ""}`
+                : `${firstAbsenceAlert.cleaner.name} is absent${absencesData!.length > 1 ? ` + ${absencesData!.length - 1} more` : ""}`
+            }
+            className="mb-3 rounded-shape-md"
+          />
+        )}
+        {uncoveredCount > 0 && (
+          <AlertBanner
+            type="error"
+            title={language === "pt" ? "Serviços descobertos" : "Uncovered services"}
+            message={
+              language === "pt"
+                ? `${uncoveredCount} serviço(s) sem colaboradora atribuída`
+                : `${uncoveredCount} service(s) without an assigned cleaner`
+            }
+            action={firstUncoveredJob ? {
+              label: language === "pt" ? "Atribuir" : "Assign",
+              onClick: () => setAssignJobId(firstUncoveredJob.id),
+            } : undefined}
+            className="mb-3 rounded-shape-md"
+          />
+        )}
+
+        {/* ─── WeekStrip (mobile only) ─── */}
+        <div className="lg:hidden mb-3">
+          <WeekStrip
+            days={weekStripDays}
+            selectedDate={carouselDate}
+            onDaySelect={setCarouselDate}
+          />
+        </div>
+
+        {/* ─── Mobile carousel ─── */}
+        <div className="lg:hidden mb-6">
+          {weekLoading ? (
+            <ScheduleSkeleton />
+          ) : (
+            <div className="rounded-shape-lg border border-border overflow-hidden bg-card">
+              <ScheduleCarousel
+                days={carouselDays}
+                selectedDate={carouselDate}
+                onDateChange={setCarouselDate}
+                onEmployeeToggle={handleCarouselToggle}
+                employees={carouselEmployees}
+                schedule={carouselSchedule}
+                loading={weekLoading}
+                onAddEmployee={() => window.location.href = "/colaboradores"}
+              />
+            </div>
+          )}
+        </div>
+
         {/* Week not found or empty — Show empty board */}
         {(weekNotFound || weekEmpty) && (
           <EmptyWeekBoard
@@ -1795,11 +1911,12 @@ function DashboardContent() {
           />
         )}
 
-        {/* Loading */}
-        {weekLoading && <ScheduleSkeleton />}
+        {/* Loading (desktop only — mobile loading is handled inside carousel above) */}
+        {weekLoading && <div className="hidden lg:block"><ScheduleSkeleton /></div>}
 
-        {/* Schedule table — with data */}
+        {/* Schedule table — desktop only */}
         {weekData && !weekLoading && jobs.length > 0 && (
+          <div className="hidden lg:block">
           <>
             {/* Search */}
             <div className="mb-3">
@@ -2070,6 +2187,7 @@ function DashboardContent() {
               </div>
             </div>
           </>
+          </div>
         )}
       </div>
 
