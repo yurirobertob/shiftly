@@ -1397,9 +1397,13 @@ function DashboardContent() {
   const [assignJobId, setAssignJobId] = useState<string | null>(null);
   const [extraRows, setExtraRows] = useState(2); // placeholder rows in filled schedule
 
-  // Standalone drawer state — opened from external pages (e.g., /clientes → "Atribuir serviço")
-  const [standaloneDrawer, setStandaloneDrawer] = useState<{ client: any; date: string } | null>(null);
+  // Standalone drawer state — opened from external pages (e.g., /clientes → "Atribuir serviço") and mobile carousel
+  const [standaloneDrawer, setStandaloneDrawer] = useState<{ client: any; date: string; preSelectedCleaner?: ApiCleaner | null } | null>(null);
   const [isStandaloneSubmitting, setIsStandaloneSubmitting] = useState(false);
+
+  // Mobile client picker — shown when user taps a cleaner row in the carousel to add a service
+  const [mobileClientPicker, setMobileClientPicker] = useState<{ date: string; employee: ApiCleaner } | null>(null);
+  const [mobileClientSearch, setMobileClientSearch] = useState("");
 
   // Handle ?assignClientId= URL param from clients page
   useEffect(() => {
@@ -1621,11 +1625,11 @@ function DashboardContent() {
     if (!scheduled) {
       await registerAbsenceMut.mutateAsync({ cleanerId: employeeId, date: dateStr });
     } else {
-      toast.info(
-        language === "pt"
-          ? "Para adicionar serviços, use o modo desktop"
-          : "To add services, switch to desktop view"
-      );
+      const employee = cleanersData?.find((c) => c.id === employeeId);
+      if (employee) {
+        setMobileClientSearch("");
+        setMobileClientPicker({ date: dateStr, employee });
+      }
     }
   }
 
@@ -2253,13 +2257,92 @@ function DashboardContent() {
         <ServicosSemanaChart data={servicosSemana} />
       </div>
 
+      {/* ─── MOBILE CLIENT PICKER (carousel → add service flow) ─── */}
+      {mobileClientPicker && (
+        <div className="fixed inset-0 z-50 flex flex-col justify-end">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setMobileClientPicker(null)} />
+          <div className="relative w-full bg-white dark:bg-gray-900 rounded-t-2xl shadow-2xl animate-in slide-in-from-bottom max-h-[80vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b dark:border-gray-700">
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide mb-0.5">
+                  {language === "pt" ? "Adicionar serviço para" : "Add service for"}
+                </p>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+                  {mobileClientPicker.employee.name}
+                </h3>
+              </div>
+              <button
+                onClick={() => setMobileClientPicker(null)}
+                className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
+                <X className="h-5 w-5 text-gray-500" />
+              </button>
+            </div>
+            {/* Search */}
+            <div className="px-5 py-3 border-b dark:border-gray-700">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder={language === "pt" ? "Buscar cliente..." : "Search client..."}
+                  value={mobileClientSearch}
+                  onChange={(e) => setMobileClientSearch(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                  autoFocus
+                />
+              </div>
+            </div>
+            {/* Client list */}
+            <div className="overflow-y-auto flex-1 py-2">
+              {(clientsData ?? [])
+                .filter((c: any) =>
+                  mobileClientSearch.trim() === "" ||
+                  c.name.toLowerCase().includes(mobileClientSearch.toLowerCase())
+                )
+                .map((c: any) => (
+                  <button
+                    key={c.id}
+                    className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                    onClick={() => {
+                      const { date, employee } = mobileClientPicker;
+                      setMobileClientPicker(null);
+                      setMobileClientSearch("");
+                      setStandaloneDrawer({ client: c, date, preSelectedCleaner: employee });
+                    }}
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-900/40">
+                      <Building2 className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{c.name}</p>
+                      {c.address && (
+                        <p className="text-xs text-gray-500 truncate">{c.address}</p>
+                      )}
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-gray-400 ml-auto shrink-0" />
+                  </button>
+                ))}
+              {(clientsData ?? []).filter((c: any) =>
+                mobileClientSearch.trim() === "" ||
+                c.name.toLowerCase().includes(mobileClientSearch.toLowerCase())
+              ).length === 0 && (
+                <p className="text-sm text-gray-500 text-center py-8">
+                  {language === "pt" ? "Nenhum cliente encontrado" : "No clients found"}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ─── STANDALONE SERVICE DRAWER (from /clientes → "Atribuir serviço") ─── */}
       {standaloneDrawer && (
         <ServiceConfigDrawer
           client={standaloneDrawer.client}
           date={standaloneDrawer.date}
           cleaners={cleanersData ?? []}
-          preSelectedCleaner={null}
+          preSelectedCleaner={standaloneDrawer.preSelectedCleaner ?? null}
           lang={language}
           isSubmitting={isStandaloneSubmitting}
           editableDate
