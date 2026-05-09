@@ -9,7 +9,7 @@ const meta: Meta<typeof Button> = {
   argTypes: {
     variant: {
       control: "select",
-      options: ["default", "outline", "secondary", "ghost", "destructive", "link"],
+      options: ["default", "outline", "secondary", "ghost", "destructive", "link", "tonal", "elevated"],
     },
     size: {
       control: "select",
@@ -120,13 +120,29 @@ export const ShiftslyGreen: Story = {
   ),
 };
 
+export const Tonal: Story = {
+  args: {
+    children: "Escalar colaboradora",
+    variant: "tonal",
+  },
+}
+
+export const Elevated: Story = {
+  args: {
+    children: "Ver histórico",
+    variant: "elevated",
+  },
+}
+
 export const AllVariants: Story = {
   render: () => (
     <div className="flex flex-wrap gap-3">
-      <Button variant="default">Default</Button>
+      <Button variant="default">Filled</Button>
+      <Button variant="tonal">Tonal</Button>
+      <Button variant="elevated">Elevated</Button>
       <Button variant="outline">Outline</Button>
       <Button variant="secondary">Secondary</Button>
-      <Button variant="ghost">Ghost</Button>
+      <Button variant="ghost">Text</Button>
       <Button variant="destructive">Destructive</Button>
       <Button variant="link">Link</Button>
     </div>
