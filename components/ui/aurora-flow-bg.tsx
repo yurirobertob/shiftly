@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -151,9 +151,10 @@ const AuroraBackground = () => {
 
 const CameraController = () => {
   const { camera } = useThree();
+  const startRef = useRef(performance.now());
 
-  useFrame((state) => {
-    const time = state.clock.elapsedTime;
+  useFrame(() => {
+    const time = (performance.now() - startRef.current) / 1000;
     camera.position.x = Math.sin(time * 0.05) * 3;
     camera.position.y = Math.cos(time * 0.07) * 2;
     camera.position.z = 30;
