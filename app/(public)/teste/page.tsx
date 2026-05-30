@@ -97,7 +97,7 @@ const STEP_SECTION: Record<StepId, number> = {
 const SECTION_NAMES: Record<number, string> = {
   1: "Boas-vindas",
   2: "Seu perfil",
-  3: "Acesso ao Shiftly",
+  3: "Acesso ao Shiftsly",
   4: "Montando a semana",
   5: "Explorando o sistema",
   6: "Impressão final",
@@ -373,7 +373,7 @@ export default function TestePage() {
             </h1>
             <div className="text-[16px] text-[#7A7A7A] leading-relaxed space-y-4 text-left" style={sans}>
               <p>
-                Você vai testar o Shiftly — uma plataforma criada pra facilitar
+                Você vai testar o Shiftsly — uma plataforma criada pra facilitar
                 a vida de gestoras de limpeza como você.
               </p>
               <p>
@@ -462,7 +462,7 @@ export default function TestePage() {
         return (
           <div>
             <h2 className="text-2xl text-[#2D2D2D] mb-4 leading-snug" style={serif}>
-              Hora de explorar o Shiftly ✨
+              Hora de explorar o Shiftsly ✨
             </h2>
             <p className="text-[15px] text-[#7A7A7A] leading-relaxed mb-5" style={sans}>
               Agora você vai acessar o sistema. Já deixamos tudo pronto pra você
@@ -478,7 +478,7 @@ export default function TestePage() {
               className="block w-full text-center py-4 rounded-2xl text-white font-semibold text-[16px] mb-6 transition-all duration-200 hover:opacity-90"
               style={{ ...sans, backgroundColor: "#A8C5B5" }}
             >
-              Acessar o Shiftly →
+              Acessar o Shiftsly →
             </a>
             <div
               className="rounded-2xl px-5 py-4"
@@ -569,7 +569,7 @@ export default function TestePage() {
         return (
           <div>
             <p className="text-[12px] uppercase tracking-widest text-[#7A7A7A] mb-3" style={sans}>
-              Sobre o Shiftly no geral
+              Sobre o Shiftsly no geral
             </p>
             <h2 className="text-2xl text-[#2D2D2D] mb-3 leading-snug" style={serif}>
               Além da agenda da semana, o que mais você explorou?
@@ -634,7 +634,7 @@ export default function TestePage() {
               Sua impressão geral
             </p>
             <h2 className="text-2xl text-[#2D2D2D] mb-6 leading-snug" style={serif}>
-              Em uma palavra ou frase, como você descreveria o Shiftly?
+              Em uma palavra ou frase, como você descreveria o Shiftsly?
             </h2>
             <input
               type="text"
@@ -665,7 +665,7 @@ export default function TestePage() {
         return (
           <div>
             <h2 className="text-2xl text-[#2D2D2D] mb-3 leading-snug" style={serif}>
-              De 0 a 10, o quanto você indicaria o Shiftly para outra gestora de
+              De 0 a 10, o quanto você indicaria o Shiftsly para outra gestora de
               limpeza?
             </h2>
             <p className="text-[13px] text-[#7A7A7A] mb-6" style={sans}>
@@ -718,7 +718,7 @@ export default function TestePage() {
         return (
           <div>
             <h2 className="text-2xl text-[#2D2D2D] mb-5 leading-snug" style={serif}>
-              Se você pudesse mudar uma coisa no Shiftly agora, o que seria?
+              Se você pudesse mudar uma coisa no Shiftsly agora, o que seria?
             </h2>
             <Textarea
               field="oneChange"
@@ -736,7 +736,7 @@ export default function TestePage() {
 
   const buttonLabel = () => {
     if (step === "welcome") return "Vamos começar →";
-    if (step === "productAccess") return "Já explorei o Shiftly, continuar →";
+    if (step === "productAccess") return "Já explorei o Shiftsly, continuar →";
     if (nextStep(step, data) === null)
       return submitting ? "Enviando..." : "Enviar respostas →";
     return "Continuar →";

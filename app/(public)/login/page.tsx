@@ -39,20 +39,20 @@ export default function LoginPage() {
         <div className="mb-8 text-center">
           <h1
             className="text-3xl font-bold tracking-tight"
-            style={{ color: "#2463EB" }}
+            style={{ color: "#1B6545" }}
           >
             Shiftsly
           </h1>
           <p className="mt-2 text-sm text-gray-600">
-            Manage your shifts with ease
+            A agenda da sua equipe em um só lugar
           </p>
         </div>
 
         <Card>
           <CardHeader className="text-center">
-            <CardTitle>Welcome back</CardTitle>
+            <CardTitle>Bem-vinda de volta</CardTitle>
             <CardDescription>
-              Sign in to your account to continue
+              Entre na sua conta para continuar
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
@@ -81,7 +81,7 @@ export default function LoginPage() {
                   fill="#EA4335"
                 />
               </svg>
-              Continue with Google
+              Entrar com Google
             </Button>
 
             {/* Divider */}
@@ -91,7 +91,7 @@ export default function LoginPage() {
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-card px-2 text-muted-foreground">
-                  Or continue with email
+                  Ou continue com email
                 </span>
               </div>
             </div>
@@ -99,13 +99,13 @@ export default function LoginPage() {
             {/* Email Sign In */}
             {emailSent ? (
               <div className="rounded-lg bg-green-50 p-4 text-center text-sm text-green-700">
-                Check your email for a magic link to sign in.
+                Verifique seu email — enviamos um link de acesso.
               </div>
             ) : (
               <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3">
                 <Input
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="seu@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -115,9 +115,9 @@ export default function LoginPage() {
                   type="submit"
                   className="w-full"
                   disabled={isLoading || !email}
-                  style={{ backgroundColor: "#2463EB" }}
+                  style={{ backgroundColor: "#1B6545" }}
                 >
-                  Send magic link
+                  Enviar link de acesso
                 </Button>
               </form>
             )}

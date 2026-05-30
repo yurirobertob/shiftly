@@ -34,7 +34,7 @@ export default function ObrigadaPage() {
 
         <p className="text-[16px] text-[#7A7A7A] leading-relaxed mb-4">
           Muito obrigada pela sua participação. Seu feedback é extremamente
-          valioso para o desenvolvimento do Shiftly.
+          valioso para o desenvolvimento do Shiftsly.
         </p>
 
         <p className="text-[16px] text-[#7A7A7A] leading-relaxed mb-8">
@@ -64,7 +64,7 @@ export default function ObrigadaPage() {
         </div>
 
         <p className="text-[14px] text-[#7A7A7A] leading-relaxed mb-2">
-          Para usar, acesse as configurações da sua conta no Shiftly e insira o
+          Para usar, acesse as configurações da sua conta no Shiftsly e insira o
           código no campo de desconto.
         </p>
         <p className="text-[14px] text-[#7A7A7A]">
