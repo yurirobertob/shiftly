@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Lightweight middleware - does NOT import Auth.js or Prisma
+// Lightweight proxy - does NOT import Auth.js or Prisma
 // Checks for session cookie directly to stay under Vercel Edge 1MB limit
 
 const protectedRoutes = ["/home", "/dashboard", "/app", "/settings", "/profile", "/colaboradores", "/servicos", "/relatorios", "/fechamento", "/unidades", "/clientes", "/conquistas"];
@@ -14,7 +14,7 @@ function hasSessionCookie(request: NextRequest): boolean {
   );
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Root route: if logged in → redirect to /dashboard, otherwise show landing
