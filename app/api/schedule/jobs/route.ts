@@ -1,6 +1,7 @@
 import { getAuthUserId, errorResponse, parseBody, successResponse } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { jobSchema } from "@/lib/validations";
+import { onJobCreated } from "@/lib/achievement-triggers";
 
 export async function GET(req: Request) {
   const [userId, err] = await getAuthUserId();
@@ -169,6 +170,8 @@ export async function POST(req: Request) {
       client: { select: { id: true, name: true } },
     },
   });
+
+  void onJobCreated(userId);
 
   return successResponse(job, 201);
 }

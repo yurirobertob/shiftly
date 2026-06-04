@@ -1,6 +1,7 @@
 import { getAuthUserId, errorResponse, parseBody, successResponse } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { recalculateWeekTotals } from "@/lib/db/helpers";
+import { onJobCompleted } from "@/lib/achievement-triggers";
 import { z } from "zod";
 
 const updateJobSchema = z.object({
@@ -58,6 +59,16 @@ export async function PUT(req: Request, { params }: Params) {
     return errorResponse("Job not found", 404);
   }
 
+  // Verify new clientId belongs to this user if being changed
+  if (parsed.data.clientId && parsed.data.clientId !== existing.clientId) {
+    const clientOwned = await db.client.findFirst({
+      where: { id: parsed.data.clientId, userId },
+    });
+    if (!clientOwned) {
+      return errorResponse("Client not found", 404);
+    }
+  }
+
   // Build update data
   const updateData: any = { ...parsed.data };
 
@@ -99,8 +110,9 @@ export async function PUT(req: Request, { params }: Params) {
     },
   });
 
-  // Recalculate week totals
   await recalculateWeekTotals(existing.schedule.id);
+
+  if (parsed.data.status === "COMPLETED") void onJobCompleted(userId);
 
   return successResponse(job);
 }

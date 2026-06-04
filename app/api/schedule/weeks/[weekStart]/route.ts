@@ -1,6 +1,7 @@
 import { getAuthUserId, errorResponse, parseBody, successResponse } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { recalculateWeekTotals } from "@/lib/db/helpers";
+import { onWeekClosed } from "@/lib/achievement-triggers";
 import { z } from "zod";
 
 type Params = { params: Promise<{ weekStart: string }> };
@@ -64,6 +65,10 @@ export async function PUT(req: Request, { params }: Params) {
       where: { id: existing.id },
       data: { status: parsed.data.status },
     });
+
+    if (parsed.data.status === "CLOSED") {
+      void onWeekClosed(userId, existing.id, weekStart);
+    }
   }
 
   if (parsed.data.recalculate) {

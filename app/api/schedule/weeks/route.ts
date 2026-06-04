@@ -1,6 +1,7 @@
 import { getAuthUserId, errorResponse, parseBody, successResponse } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { generateWeekFromTemplate } from "@/lib/db/helpers";
+import { onWeekGenerated } from "@/lib/achievement-triggers";
 import { z } from "zod";
 
 export async function GET(req: Request) {
@@ -109,6 +110,8 @@ export async function POST(req: Request) {
     weekStart,
     parsed.data.templateId
   );
+
+  void onWeekGenerated(userId, scheduleId);
 
   const schedule = await db.weeklySchedule.findUnique({
     where: { id: scheduleId },

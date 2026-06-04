@@ -1,5 +1,6 @@
 import { getAuthUserId, errorResponse } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
+import { onReportExported } from "@/lib/achievement-triggers";
 
 /**
  * POST: Generate a CSV export of payment summaries for a week.
@@ -107,6 +108,8 @@ export async function POST(req: Request) {
   }
 
   const csv = lines.join("\n");
+
+  void onReportExported(userId);
 
   return new Response(csv, {
     headers: {
