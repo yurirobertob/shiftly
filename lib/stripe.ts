@@ -1,91 +1,25 @@
 import Stripe from "stripe";
+import { PLAN_CONFIG, type PlanKey } from "@/lib/plan-config";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_placeholder_not_configured", {
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   typescript: true,
 });
 
-// ─── Plan definitions ─────────────────────────────────────────────────────────
+// Re-export so existing server imports keep working
+export { PLAN_CONFIG as PLANS, type PlanKey } from "@/lib/plan-config";
 
-export const PLANS = {
-  basic: {
-    name: "Basic",
-    maxCleaners: 5,
-    maxClients: 10,
-    price: { monthly: 0, yearly: 0 },
-    features: {
-      pt: [
-        "Até 5 colaboradoras",
-        "Até 10 clientes",
-        "Agenda semanal",
-        "Cálculo básico de pagamento",
-      ],
-      en: [
-        "Up to 5 cleaners",
-        "Up to 10 clients",
-        "Weekly schedule",
-        "Basic pay calculation",
-      ],
-    },
-  },
+// ─── Stripe price IDs (server-only) ──────────────────────────────────────────
+
+const STRIPE_PRICE_IDS = {
   pro: {
-    name: "Pro",
-    maxCleaners: 15,
-    maxClients: 50,
-    price: { monthly: 39, yearly: 29 },
-    stripePriceId: {
-      monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || "",
-      yearly: process.env.STRIPE_PRICE_PRO_YEARLY || "",
-    },
-    features: {
-      pt: [
-        "Até 15 colaboradoras",
-        "Até 50 clientes",
-        "Alertas de ausência + cobertura em 1 clique",
-        "Relatórios semanais PDF/CSV",
-        "Gamificação e conquistas",
-        "Suporte por email",
-      ],
-      en: [
-        "Up to 15 cleaners",
-        "Up to 50 clients",
-        "Absence alerts + 1-click cover",
-        "Weekly PDF/CSV reports",
-        "Gamification & achievements",
-        "Email support",
-      ],
-    },
+    monthly: process.env.STRIPE_PRICE_PRO_MONTHLY || "",
+    yearly: process.env.STRIPE_PRICE_PRO_YEARLY || "",
   },
   plus: {
-    name: "Plus",
-    maxCleaners: 30,
-    maxClients: 100,
-    price: { monthly: 59, yearly: 44 },
-    stripePriceId: {
-      monthly: process.env.STRIPE_PRICE_PLUS_MONTHLY || "",
-      yearly: process.env.STRIPE_PRICE_PLUS_YEARLY || "",
-    },
-    features: {
-      pt: [
-        "Até 30 colaboradoras",
-        "Até 100 clientes",
-        "Relatórios avançados com filtros",
-        "Exportar Excel",
-        "Suporte prioritário",
-        "Branding personalizado",
-      ],
-      en: [
-        "Up to 30 cleaners",
-        "Up to 100 clients",
-        "Advanced reports with filters",
-        "Excel export",
-        "Priority support",
-        "Custom branding",
-      ],
-    },
+    monthly: process.env.STRIPE_PRICE_PLUS_MONTHLY || "",
+    yearly: process.env.STRIPE_PRICE_PLUS_YEARLY || "",
   },
 } as const;
-
-export type PlanKey = keyof typeof PLANS;
 
 export function getPlanFromPriceId(
   priceId: string
@@ -112,8 +46,7 @@ export async function createCheckoutSession({
   plan: "pro" | "plus";
   interval: "monthly" | "yearly";
 }) {
-  const planConfig = PLANS[plan];
-  const priceId = planConfig.stripePriceId[interval];
+  const priceId = STRIPE_PRICE_IDS[plan][interval];
 
   if (!priceId) {
     throw new Error(`Price ID not configured for ${plan} ${interval}`);
@@ -146,3 +79,4 @@ export async function createCustomerPortalSession(stripeCustomerId: string) {
 
   return session;
 }
+

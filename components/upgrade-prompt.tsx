@@ -6,7 +6,7 @@ import { Check, Loader2, Sparkles, X, Crown } from "lucide-react";
 import { useLanguage } from "@/hooks/use-language";
 import { useCurrency } from "@/hooks/use-currency";
 import { api } from "@/lib/api";
-import { PLANS, type PlanKey } from "@/lib/stripe";
+import { PLAN_CONFIG as PLANS, type PlanKey } from "@/lib/plan-config";
 import { toast } from "sonner";
 
 interface UpgradePromptProps {
