@@ -7,8 +7,6 @@ import { trialEndingTemplate, paymentFailedTemplate } from "@/lib/email-template
 import type Stripe from "stripe";
 
 export async function POST(req: Request) {
-  console.log("=== STRIPE WEBHOOK RECEIVED ===");
-
   const body = await req.text();
   const headersList = await headers();
   const signature = headersList.get("stripe-signature");
@@ -31,8 +29,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  console.log(`[WEBHOOK] Event: ${event.type}`);
-
   try {
     switch (event.type) {
       case "checkout.session.completed": {
@@ -44,8 +40,6 @@ export async function POST(req: Request) {
         const subscriptionId = typeof session.subscription === "string"
           ? session.subscription
           : (session.subscription as any)?.id;
-
-        console.log(`[WEBHOOK] checkout.session.completed — userId=${userId}, customerId=${customerId}, subscriptionId=${subscriptionId}`);
 
         if (!userId) {
           console.error("[WEBHOOK] No userId in checkout session metadata!");
@@ -73,8 +67,6 @@ export async function POST(req: Request) {
         const periodStart = subItem ? new Date(subItem.current_period_start * 1000) : new Date();
         const periodEnd = subItem ? new Date(subItem.current_period_end * 1000) : new Date();
 
-        console.log(`[WEBHOOK] Upserting subscription: userId=${userId}, plan=${planUpper}, status=${status}, customerId=${customerId}`);
-
         await db.subscription.upsert({
           where: { userId },
           update: {
@@ -101,7 +93,6 @@ export async function POST(req: Request) {
           },
         });
 
-        console.log(`[WEBHOOK] checkout.session.completed — SUCCESS`);
         break;
       }
 
@@ -112,8 +103,6 @@ export async function POST(req: Request) {
           ? sub.customer
           : (sub.customer as any)?.id;
 
-        console.log(`[WEBHOOK] ${event.type} — customerId=${customerId}, status=${sub.status}`);
-
         // Try to find by stripeCustomerId first
         let dbSub = await db.subscription.findFirst({
           where: { stripeCustomerId: customerId },
@@ -121,7 +110,6 @@ export async function POST(req: Request) {
 
         // Fallback: find by userId from subscription metadata
         if (!dbSub && sub.metadata?.userId) {
-          console.log(`[WEBHOOK] Fallback: looking up by metadata userId=${sub.metadata.userId}`);
           dbSub = await db.subscription.findFirst({
             where: { userId: sub.metadata.userId },
           });
@@ -131,7 +119,6 @@ export async function POST(req: Request) {
               where: { id: dbSub.id },
               data: { stripeCustomerId: customerId },
             });
-            console.log(`[WEBHOOK] Linked stripeCustomerId=${customerId} to userId=${sub.metadata.userId}`);
           }
         }
 
@@ -174,14 +161,11 @@ export async function POST(req: Request) {
           updateData.maxCleaners = planInfo.plan === "plus" ? 30 : 15;
         }
 
-        console.log(`[WEBHOOK] Updating subscription id=${dbSub.id}:`, JSON.stringify(updateData));
-
         await db.subscription.update({
           where: { id: dbSub.id },
           data: updateData,
         });
 
-        console.log(`[WEBHOOK] ${event.type} — SUCCESS`);
         break;
       }
 
@@ -190,8 +174,6 @@ export async function POST(req: Request) {
         const customerId = typeof sub.customer === "string"
           ? sub.customer
           : (sub.customer as any)?.id;
-
-        console.log(`[WEBHOOK] customer.subscription.deleted — customerId=${customerId}`);
 
         const dbSub = await db.subscription.findFirst({
           where: { stripeCustomerId: customerId },
@@ -213,15 +195,12 @@ export async function POST(req: Request) {
           },
         });
 
-        console.log(`[WEBHOOK] Downgraded to BASIC — SUCCESS`);
         break;
       }
 
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = (invoice as any).subscription as string | null;
-
-        console.log(`[WEBHOOK] invoice.payment_succeeded — subscriptionId=${subscriptionId}`);
 
         if (!subscriptionId) break;
 
@@ -239,7 +218,6 @@ export async function POST(req: Request) {
           },
         });
 
-        console.log(`[WEBHOOK] invoice.payment_succeeded — SUCCESS`);
         break;
       }
 
@@ -248,8 +226,6 @@ export async function POST(req: Request) {
         const customerId = typeof invoice.customer === "string"
           ? invoice.customer
           : (invoice.customer as any)?.id;
-
-        console.log(`[WEBHOOK] invoice.payment_failed — customerId=${customerId}`);
 
         await db.subscription.updateMany({
           where: { stripeCustomerId: customerId },
@@ -282,8 +258,6 @@ export async function POST(req: Request) {
           ? sub.customer
           : (sub.customer as any)?.id;
 
-        console.log(`[WEBHOOK] trial_will_end — customerId=${customerId}`);
-
         try {
           const dbSub = await db.subscription.findFirst({
             where: { stripeCustomerId: customerId },
@@ -296,7 +270,6 @@ export async function POST(req: Request) {
               subject: "Your Shiftsly trial ends in 3 days",
               html: trialEndingTemplate(dbSub.user.name, dbSub.plan),
             });
-            console.log(`[WEBHOOK] Trial ending email sent to ${dbSub.user.email}`);
           }
         } catch (emailErr) {
           console.error("[WEBHOOK] Trial ending email error:", emailErr);
@@ -305,7 +278,6 @@ export async function POST(req: Request) {
       }
 
       default:
-        console.log(`[WEBHOOK] Unhandled event type: ${event.type}`);
     }
   } catch (err) {
     console.error("[WEBHOOK ERROR]", event.type, err);

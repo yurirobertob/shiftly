@@ -1,5 +1,12 @@
 const API_BASE = "/api";
 
+export class ApiError extends Error {
+  constructor(message: string, public status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit
@@ -14,7 +21,7 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: "Unknown error" }));
-    throw new Error(error.error || `API error: ${res.status}`);
+    throw new ApiError(error.error || `API error: ${res.status}`, res.status);
   }
 
   // Handle CSV/blob responses

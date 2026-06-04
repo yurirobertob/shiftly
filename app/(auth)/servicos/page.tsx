@@ -281,7 +281,7 @@ export default function ServicosPage() {
       );
     },
     onError: (error: Error) => {
-      if (error.message.includes("403") || error.message.includes("limit") || error.message.includes("upgrade")) {
+      if ("status" in error && (error as any).status === 403) {
         toast.error(
           language === "pt"
             ? "Limite de clientes atingido. Faça upgrade."
