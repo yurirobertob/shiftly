@@ -61,22 +61,42 @@ export async function POST(req: Request, { params }: Params) {
     return errorResponse("Schedule not found", 404);
   }
 
-  // Get all completed/scheduled jobs grouped by cleaner
-  const jobs = await db.job.findMany({
-    where: {
-      scheduleId,
-      cleanerId: { not: null },
-      status: { in: ["COMPLETED", "SCHEDULED"] },
-    },
-    select: {
-      cleanerId: true,
-      hoursWorked: true,
-      hourlyRate: true,
-      cost: true,
-    },
-  });
+  // Get week date range from the schedule
+  const weekStart = schedule.weekStart;
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
 
-  // Group by cleaner
+  // Get all completed/scheduled jobs grouped by cleaner
+  const [jobs, absences] = await Promise.all([
+    db.job.findMany({
+      where: {
+        scheduleId,
+        cleanerId: { not: null },
+        status: { in: ["COMPLETED", "SCHEDULED"] },
+      },
+      select: {
+        cleanerId: true,
+        hoursWorked: true,
+        hourlyRate: true,
+        cost: true,
+      },
+    }),
+    db.absence.findMany({
+      where: {
+        userId,
+        date: { gte: weekStart, lte: weekEnd },
+      },
+      select: { cleanerId: true },
+    }),
+  ]);
+
+  // Count absences per cleaner
+  const absenceCount = new Map<string, number>();
+  for (const a of absences) {
+    absenceCount.set(a.cleanerId, (absenceCount.get(a.cleanerId) ?? 0) + 1);
+  }
+
+  // Group jobs by cleaner
   const cleanerMap = new Map<
     string,
     { totalHours: number; totalAmount: number; totalJobs: number }
@@ -106,6 +126,7 @@ export async function POST(req: Request, { params }: Params) {
         totalHours: data.totalHours,
         totalAmount: data.totalAmount,
         totalJobs: data.totalJobs,
+        totalAbsences: absenceCount.get(cleanerId) ?? 0,
       },
       create: {
         userId,
@@ -114,6 +135,7 @@ export async function POST(req: Request, { params }: Params) {
         totalHours: data.totalHours,
         totalAmount: data.totalAmount,
         totalJobs: data.totalJobs,
+        totalAbsences: absenceCount.get(cleanerId) ?? 0,
         status: "PENDING",
       },
       include: {

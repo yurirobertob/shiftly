@@ -14,6 +14,7 @@ interface SubscriptionData {
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
+  hasStripeCustomer: boolean;
   limits: { cleaners: number; clients: number };
   usage: {
     cleaners: { current: number; limit: number };
@@ -47,6 +48,7 @@ export function usePlan() {
     currentClients: data?.usage?.clients?.current ?? 0,
     canAddCleaner: (data?.usage?.cleaners?.current ?? 0) < (data?.limits?.cleaners ?? 5),
     canAddClient: (data?.usage?.clients?.current ?? 0) < (data?.limits?.clients ?? 10),
+    hasStripeCustomer: data?.hasStripeCustomer ?? false,
     canUpgrade: plan !== "plus",
     canExportReports: plan === "pro" || plan === "plus",
     canExportExcel: plan === "plus",

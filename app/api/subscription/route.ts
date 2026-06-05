@@ -49,6 +49,7 @@ export async function GET(req: Request) {
     trialEndsAt: subscription.trialEndsAt,
     currentPeriodEnd: subscription.currentPeriodEnd,
     cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+    hasStripeCustomer: !!subscription.stripeCustomerId,
     limits,
     usage: {
       cleaners: { current: cleanerCount, limit: limits.cleaners },

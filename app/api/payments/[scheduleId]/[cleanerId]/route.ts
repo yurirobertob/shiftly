@@ -76,6 +76,16 @@ export async function PUT(req: Request, { params }: Params) {
     return errorResponse(parsed.error.issues[0].message);
   }
 
+  // Guard against reverting a completed payment
+  const existing = await db.paymentSummary.findUnique({
+    where: { scheduleId_cleanerId: { scheduleId, cleanerId } },
+    select: { status: true },
+  });
+  if (!existing) return errorResponse("Payment summary not found", 404);
+  if (existing.status === "PAID" && parsed.data.status === "PENDING") {
+    return errorResponse("Cannot revert a completed payment to pending", 409);
+  }
+
   const payment = await db.paymentSummary.update({
     where: {
       scheduleId_cleanerId: { scheduleId, cleanerId },

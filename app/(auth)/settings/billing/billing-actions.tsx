@@ -9,9 +9,10 @@ interface BillingActionsProps {
   subscribed: boolean;
   hasStripeCustomer: boolean;
   currentPlan?: PlanKey;
+  pt?: boolean;
 }
 
-export function BillingActions({ subscribed, hasStripeCustomer, currentPlan = "basic" }: BillingActionsProps) {
+export function BillingActions({ subscribed, hasStripeCustomer, currentPlan = "basic", pt = false }: BillingActionsProps) {
   const [loading, setLoading] = useState(false);
   const [showUpgrade, setShowUpgrade] = useState(false);
 
@@ -37,7 +38,7 @@ export function BillingActions({ subscribed, hasStripeCustomer, currentPlan = "b
             className="rounded-lg bg-[#22C55E] px-6 py-2.5 text-sm font-medium text-white hover:bg-[#16A34A] transition-colors disabled:opacity-50 flex items-center gap-2"
           >
             <Sparkles className="h-4 w-4" />
-            Fazer upgrade
+            {pt ? "Fazer upgrade" : "Upgrade plan"}
           </button>
         )}
 
@@ -52,7 +53,9 @@ export function BillingActions({ subscribed, hasStripeCustomer, currentPlan = "b
             ) : (
               <CreditCard className="h-4 w-4" />
             )}
-            {loading ? "Processando..." : "Gerenciar assinatura"}
+            {loading
+              ? (pt ? "Processando..." : "Processing...")
+              : (pt ? "Gerenciar assinatura" : "Manage subscription")}
           </button>
         )}
       </div>

@@ -37,6 +37,12 @@ export async function PUT(
     }
 
     const { id } = await params;
+
+    const existing = await db.cleaner.findUnique({ where: { id } });
+    if (!existing || existing.userId !== session.user.id) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
     const body = await request.json();
     const parsed = cleanerSchema.partial().safeParse(body);
 
@@ -66,7 +72,17 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    await db.cleaner.delete({ where: { id } });
+
+    const existing = await db.cleaner.findUnique({ where: { id } });
+    if (!existing || existing.userId !== session.user.id) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // Soft delete — preserves historical data (jobs, payments, absences)
+    await db.cleaner.update({
+      where: { id },
+      data: { status: "INACTIVE" },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

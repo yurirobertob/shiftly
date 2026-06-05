@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { hasAccess, daysLeftInTrial } from "@/lib/subscription";
+import { useLanguage } from "@/hooks/use-language";
 import Link from "next/link";
 
 interface PaywallGateProps {
@@ -11,6 +12,8 @@ interface PaywallGateProps {
 
 export function PaywallGate({ children, fallback }: PaywallGateProps) {
   const { data: session } = useSession();
+  const { language } = useLanguage();
+  const pt = language === "pt";
 
   if (!session?.user) return null;
 
@@ -47,17 +50,18 @@ export function PaywallGate({ children, fallback }: PaywallGateProps) {
           </svg>
         </div>
         <h3 className="text-lg font-semibold text-gray-900">
-          Seu período de teste expirou
+          {pt ? "Seu período de teste expirou" : "Your trial has ended"}
         </h3>
         <p className="mt-2 text-sm text-gray-500">
-          Faça upgrade para o plano Pro e continue usando todos os recursos do
-          Shiftsly sem limitações.
+          {pt
+            ? "Faça upgrade para o plano Pro e continue usando todos os recursos do Shiftsly sem limitações."
+            : "Upgrade to the Pro plan to keep using all Shiftsly features without limits."}
         </p>
         <Link
           href="/settings/billing"
           className="mt-6 inline-flex items-center justify-center rounded-lg bg-[#2463EB] px-6 py-2.5 text-sm font-medium text-white hover:bg-[#1d4fc7] transition-colors"
         >
-          Fazer upgrade
+          {pt ? "Fazer upgrade" : "Upgrade plan"}
         </Link>
       </div>
     </div>

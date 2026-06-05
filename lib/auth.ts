@@ -17,7 +17,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      allowDangerousEmailAccountLinking: true,
     }),
     Resend({
       apiKey: process.env.AUTH_RESEND_KEY,
@@ -95,6 +94,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         } catch (error) {
           console.error("[AUTH] jwt callback error:", error);
+          // Ensure token always has a safe plan fallback if the DB query fails
+          if (token.plan === undefined) {
+            token.plan = "BASIC" as SubscriptionPlan;
+            token.trialEndsAt = null;
+            token.currentPeriodEnd = null;
+          }
         }
       }
       return token;

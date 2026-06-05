@@ -67,15 +67,22 @@ async function main() {
   console.log(`✓ ${achievements.length} achievements seeded`);
 
   // 2. Find or skip test user
-  const testEmail = "yuri@shiftsly.com";
+  // Set SEED_TEST_EMAIL in .env to seed demo data for a specific account.
+  // If not set, skip business data seeding entirely.
+  const testEmail = process.env.SEED_TEST_EMAIL;
+  if (!testEmail) {
+    console.log("⏩ SEED_TEST_EMAIL not set — skipping demo business data");
+    return;
+  }
+
   let user = await prisma.user.findUnique({ where: { email: testEmail } });
   if (!user) {
     user = await prisma.user.create({
-      data: { name: "Yuri Roberto", email: testEmail },
+      data: { name: process.env.SEED_TEST_NAME ?? "Demo User", email: testEmail },
     });
-    console.log("✓ Test user created:", user.email);
+    console.log("✓ Seed user created:", user.email);
   } else {
-    console.log("✓ Test user found:", user.email);
+    console.log("✓ Seed user found:", user.email);
   }
 
   // Check if already seeded (cleaners exist)

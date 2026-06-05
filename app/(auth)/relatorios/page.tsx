@@ -65,6 +65,9 @@ export default function RelatoriosPage() {
   const { canExportReports, plan } = usePlan();
   const queryClient = useQueryClient();
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [confirmPayId, setConfirmPayId] = useState<string | null>(null);
+  const [confirmAllPay, setConfirmAllPay] = useState(false);
+  const [pendingRowId, setPendingRowId] = useState<string | null>(null);
 
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(null);
 
@@ -106,15 +109,18 @@ export default function RelatoriosPage() {
 
   // Mark single payment as paid
   const markPaidMutation = useMutation({
-    mutationFn: (cleanerId: string) =>
-      api.put(`/payments/${activeWeekId}/${cleanerId}`, { status: "PAID" }),
+    mutationFn: (cleanerId: string) => {
+      setPendingRowId(cleanerId);
+      return api.put(`/payments/${activeWeekId}/${cleanerId}`, { status: "PAID" });
+    },
     onSuccess: () => {
+      setPendingRowId(null);
+      setConfirmPayId(null);
       queryClient.invalidateQueries({ queryKey: ["payments", activeWeekId] });
-      toast.success(
-        language === "pt" ? "Marcado como pago" : "Marked as paid"
-      );
+      toast.success(language === "pt" ? "Marcado como pago" : "Marked as paid");
     },
     onError: (err: Error) => {
+      setPendingRowId(null);
       toast.error(err.message);
     },
   });
@@ -122,23 +128,17 @@ export default function RelatoriosPage() {
   // Mark all as paid
   const markAllPaidMutation = useMutation({
     mutationFn: async () => {
-      const pending =
-        paymentData?.payments.filter((p) => p.status === "PENDING") ?? [];
+      const pending = paymentData?.payments.filter((p) => p.status === "PENDING") ?? [];
       await Promise.all(
         pending.map((p) =>
-          api.put(`/payments/${activeWeekId}/${p.cleanerId}`, {
-            status: "PAID",
-          })
+          api.put(`/payments/${activeWeekId}/${p.cleanerId}`, { status: "PAID" })
         )
       );
     },
     onSuccess: () => {
+      setConfirmAllPay(false);
       queryClient.invalidateQueries({ queryKey: ["payments", activeWeekId] });
-      toast.success(
-        language === "pt"
-          ? "Todos marcados como pagos"
-          : "All marked as paid"
-      );
+      toast.success(language === "pt" ? "Todos marcados como pagos" : "All marked as paid");
     },
     onError: (err: Error) => {
       toast.error(err.message);
@@ -153,7 +153,7 @@ export default function RelatoriosPage() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `relatorio-${activeWeekId}.csv`;
+      a.download = `${language === "pt" ? "relatorio" : "report"}-${activeWeekId}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -227,6 +227,7 @@ export default function RelatoriosPage() {
           {/* Week selector */}
           {weeks && weeks.length > 0 && (
             <select
+              aria-label={language === "pt" ? "Selecionar semana" : "Select week"}
               className="mt-2 text-sm text-gray-500 bg-transparent border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-[#22C55E]/30"
               value={activeWeekId ?? ""}
               onChange={(e) => setSelectedWeekId(e.target.value)}
@@ -245,7 +246,7 @@ export default function RelatoriosPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => markAllPaidMutation.mutate()}
+              onClick={() => setConfirmAllPay(true)}
               disabled={markAllPaidMutation.isPending}
             >
               {markAllPaidMutation.isPending ? (
@@ -428,12 +429,10 @@ export default function RelatoriosPage() {
                             variant="outline"
                             size="sm"
                             className="text-xs"
-                            onClick={() =>
-                              markPaidMutation.mutate(payment.cleanerId)
-                            }
-                            disabled={markPaidMutation.isPending}
+                            onClick={() => setConfirmPayId(payment.cleanerId)}
+                            disabled={pendingRowId === payment.cleanerId}
                           >
-                            {markPaidMutation.isPending ? (
+                            {pendingRowId === payment.cleanerId ? (
                               <Loader2 className="h-3 w-3 animate-spin" />
                             ) : language === "pt" ? (
                               "Marcar como pago"
@@ -481,6 +480,92 @@ export default function RelatoriosPage() {
         targetPlan={plan === "pro" ? "plus" : "pro"}
         trigger="feature_locked"
       />
+
+      {/* Confirm single payment */}
+      {confirmPayId && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-pay-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+        >
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <h2 id="confirm-pay-title" className="text-base font-semibold text-gray-900">
+              {language === "pt" ? "Confirmar pagamento" : "Confirm payment"}
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              {language === "pt"
+                ? "Marcar como pago não pode ser desfeito. Confirma?"
+                : "Marking as paid cannot be undone. Are you sure?"}
+            </p>
+            <div className="mt-4 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setConfirmPayId(null)}
+              >
+                {language === "pt" ? "Cancelar" : "Cancel"}
+              </Button>
+              <Button
+                className="flex-1 bg-[#22C55E] hover:bg-[#16a34a] text-white"
+                onClick={() => markPaidMutation.mutate(confirmPayId)}
+                disabled={markPaidMutation.isPending}
+              >
+                {markPaidMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : language === "pt" ? (
+                  "Confirmar"
+                ) : (
+                  "Confirm"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm mark all as paid */}
+      {confirmAllPay && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="confirm-all-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4"
+        >
+          <div className="w-full max-w-sm rounded-xl bg-white p-6 shadow-xl">
+            <h2 id="confirm-all-title" className="text-base font-semibold text-gray-900">
+              {language === "pt" ? "Marcar todos como pagos?" : "Mark all as paid?"}
+            </h2>
+            <p className="mt-2 text-sm text-gray-500">
+              {language === "pt"
+                ? `Isso marcará ${pendingCount} pagamento${pendingCount !== 1 ? "s" : ""} como pago${pendingCount !== 1 ? "s" : ""}. Esta ação não pode ser desfeita.`
+                : `This will mark ${pendingCount} payment${pendingCount !== 1 ? "s" : ""} as paid. This action cannot be undone.`}
+            </p>
+            <div className="mt-4 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setConfirmAllPay(false)}
+              >
+                {language === "pt" ? "Cancelar" : "Cancel"}
+              </Button>
+              <Button
+                className="flex-1 bg-[#22C55E] hover:bg-[#16a34a] text-white"
+                onClick={() => markAllPaidMutation.mutate()}
+                disabled={markAllPaidMutation.isPending}
+              >
+                {markAllPaidMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : language === "pt" ? (
+                  "Confirmar"
+                ) : (
+                  "Confirm"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

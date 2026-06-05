@@ -1,5 +1,4 @@
-"use client";
-
+import { cookies } from "next/headers";
 import { LanguageProvider } from "@/hooks/use-language";
 import { Navbar } from "@/components/landing/navbar";
 import { HeroSection } from "@/components/landing/hero-section";
@@ -14,9 +13,13 @@ import { PricingSection } from "@/components/landing/pricing-section";
 import { FinalCTA } from "@/components/landing/final-cta";
 import { Footer } from "@/components/landing/footer";
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const cookieStore = await cookies();
+  const langCookie = cookieStore.get("shiftsly-lang")?.value;
+  const initialLanguage: "pt" | "en" = langCookie === "pt" ? "pt" : "en";
+
   return (
-    <LanguageProvider>
+    <LanguageProvider initialLanguage={initialLanguage}>
       <div className="min-h-screen bg-white">
         <Navbar />
         <HeroSection />

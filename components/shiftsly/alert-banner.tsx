@@ -3,6 +3,7 @@
 import * as React from "react"
 import { AlertTriangle, Info, X, XCircle, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/hooks/use-language"
 
 type AlertType = "error" | "warning" | "info"
 
@@ -60,6 +61,7 @@ function AlertBanner({
   className,
 }: AlertBannerProps) {
   const [dismissed, setDismissed] = React.useState(false)
+  const { language } = useLanguage()
   const config = typeConfig[type]
   const Icon = config.icon
 
@@ -110,7 +112,7 @@ function AlertBanner({
           <button
             type="button"
             onClick={handleDismiss}
-            aria-label="Dispensar alerta"
+            aria-label={language === "pt" ? "Dispensar alerta" : "Dismiss alert"}
             className="rounded-shape-sm p-1 text-muted-foreground transition-colors hover:bg-black/10 dark:hover:bg-white/10"
           >
             <X className="size-4" />

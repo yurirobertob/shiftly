@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,10 +12,49 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
+type Lang = "pt" | "en";
+
+const t = {
+  pt: {
+    tagline: "Gerencie sua equipe de limpeza com facilidade",
+    title: "Bem-vindo de volta",
+    description: "Entre na sua conta para continuar",
+    google: "Continuar com Google",
+    divider: "Ou continue com email",
+    placeholder: "voce@exemplo.com",
+    sendLink: "Enviar magic link",
+    sending: "Enviando...",
+    sent: "Verifique seu email para o link de acesso.",
+  },
+  en: {
+    tagline: "Manage your cleaning team with ease",
+    title: "Welcome back",
+    description: "Sign in to your account to continue",
+    google: "Continue with Google",
+    divider: "Or continue with email",
+    placeholder: "you@example.com",
+    sendLink: "Send magic link",
+    sending: "Sending...",
+    sent: "Check your email for a magic link to sign in.",
+  },
+};
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [lang, setLang] = useState<Lang>("en");
+
+  useEffect(() => {
+    const stored = typeof window !== "undefined" ? localStorage.getItem("language") : null;
+    if (stored === "pt" || stored === "en") {
+      setLang(stored);
+    } else if (typeof navigator !== "undefined" && navigator.language.startsWith("pt")) {
+      setLang("pt");
+    }
+  }, []);
+
+  const strings = t[lang];
 
   async function handleGoogleSignIn() {
     setIsLoading(true);
@@ -25,7 +64,6 @@ export default function LoginPage() {
   async function handleEmailSignIn(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
-
     setIsLoading(true);
     await signIn("resend", { email, callbackUrl: "/dashboard" });
     setEmailSent(true);
@@ -35,25 +73,29 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
+        {/* Language toggle */}
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={() => setLang(lang === "pt" ? "en" : "pt")}
+            className="text-xs text-gray-400 hover:text-gray-600 transition-colors px-2 py-1 rounded"
+            aria-label={lang === "pt" ? "Switch to English" : "Mudar para Português"}
+          >
+            {lang === "pt" ? "🇬🇧 English" : "🇧🇷 Português"}
+          </button>
+        </div>
+
         {/* Branding */}
         <div className="mb-8 text-center">
-          <h1
-            className="text-3xl font-bold tracking-tight"
-            style={{ color: "#1B6545" }}
-          >
+          <h1 className="text-3xl font-bold tracking-tight" style={{ color: "#1B6545" }}>
             Shiftsly
           </h1>
-          <p className="mt-2 text-sm text-gray-600">
-            A agenda da sua equipe em um só lugar
-          </p>
+          <p className="mt-2 text-sm text-gray-600">{strings.tagline}</p>
         </div>
 
         <Card>
           <CardHeader className="text-center">
-            <CardTitle>Bem-vinda de volta</CardTitle>
-            <CardDescription>
-              Entre na sua conta para continuar
-            </CardDescription>
+            <CardTitle>{strings.title}</CardTitle>
+            <CardDescription>{strings.description}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {/* Google Sign In */}
@@ -63,7 +105,11 @@ export default function LoginPage() {
               onClick={handleGoogleSignIn}
               disabled={isLoading}
             >
-              <svg className="mr-2 size-4" viewBox="0 0 24 24">
+              <svg
+                className="mr-2 size-4"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
                   fill="#4285F4"
@@ -81,7 +127,7 @@ export default function LoginPage() {
                   fill="#EA4335"
                 />
               </svg>
-              Entrar com Google
+              {strings.google}
             </Button>
 
             {/* Divider */}
@@ -90,22 +136,24 @@ export default function LoginPage() {
                 <span className="w-full border-t" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">
-                  Ou continue com email
-                </span>
+                <span className="bg-card px-2 text-muted-foreground">{strings.divider}</span>
               </div>
             </div>
 
             {/* Email Sign In */}
             {emailSent ? (
               <div className="rounded-lg bg-green-50 p-4 text-center text-sm text-green-700">
-                Verifique seu email — enviamos um link de acesso.
+                {strings.sent}
               </div>
             ) : (
               <form onSubmit={handleEmailSignIn} className="flex flex-col gap-3">
+                <label htmlFor="login-email" className="sr-only">
+                  Email
+                </label>
                 <Input
+                  id="login-email"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder={strings.placeholder}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -117,7 +165,7 @@ export default function LoginPage() {
                   disabled={isLoading || !email}
                   style={{ backgroundColor: "#1B6545" }}
                 >
-                  Enviar link de acesso
+                  {isLoading ? strings.sending : strings.sendLink}
                 </Button>
               </form>
             )}

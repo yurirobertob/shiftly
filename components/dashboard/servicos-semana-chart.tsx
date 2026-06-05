@@ -1,5 +1,7 @@
 "use client";
 
+import { useLanguage } from "@/hooks/use-language";
+
 interface DiaServicos {
   dia: string;
   total: number;
@@ -7,11 +9,14 @@ interface DiaServicos {
 }
 
 export function ServicosSemanaChart({ data }: { data: DiaServicos[] }) {
+  const { language } = useLanguage();
   const maxTotal = Math.max(...data.map((d) => d.total));
 
   return (
     <div className="rounded-xl border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Serviços na semana</h3>
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">
+        {language === "pt" ? "Serviços na semana" : "Services this week"}
+      </h3>
       <div className="flex items-end justify-between gap-2 h-32">
         {data.map((d) => {
           const pct = (d.total / maxTotal) * 100;

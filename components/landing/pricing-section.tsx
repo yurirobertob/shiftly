@@ -3,8 +3,10 @@
 import { useRef, useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Check, Lock, Loader2 } from "lucide-react";
-import NumberFlow from "@number-flow/react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+
+const NumberFlow = dynamic(() => import("@number-flow/react"), { ssr: false });
 import { useLanguage } from "@/hooks/use-language";
 import { SparklesCore } from "@/components/ui/sparkles";
 import { VerticalCutReveal } from "@/components/ui/vertical-cut-reveal";

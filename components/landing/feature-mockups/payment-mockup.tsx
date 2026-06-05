@@ -70,7 +70,7 @@ export function PaymentMockup() {
         <div className="mt-4 bg-[#E6F4ED] rounded-lg p-3 flex items-center justify-between">
           <span className="text-sm font-semibold text-[#111827]">Total</span>
           <span className="text-lg font-bold text-[#1B6545]">
-            £{grandTotal.toLocaleString('en-GB')}
+            £{grandTotal.toLocaleString("en-GB")}
           </span>
         </div>
       </div>

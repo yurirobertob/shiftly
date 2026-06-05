@@ -11,26 +11,29 @@ interface LanguageContextType {
   t: (key: string) => any;
 }
 
+interface LanguageProviderProps {
+  children: ReactNode;
+  initialLanguage?: Language;
+}
+
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("pt");
+export function LanguageProvider({ children, initialLanguage = "en" }: LanguageProviderProps) {
+  const [language, setLanguageState] = useState<Language>(initialLanguage);
 
   useEffect(() => {
+    // If user previously made an explicit choice, honour it and keep cookie in sync
     const saved = localStorage.getItem("shiftsly-lang") as Language | null;
     if (saved === "pt" || saved === "en") {
       setLanguageState(saved);
-    } else {
-      const browserLang = navigator.language?.toLowerCase() || "";
-      if (browserLang.startsWith("pt")) {
-        setLanguageState("pt");
-      }
+      document.cookie = `shiftsly-lang=${saved}; path=/; max-age=31536000; SameSite=Lax`;
     }
   }, []);
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem("shiftsly-lang", lang);
+    document.cookie = `shiftsly-lang=${lang}; path=/; max-age=31536000; SameSite=Lax`;
   };
 
   const t = (key: string): any => {

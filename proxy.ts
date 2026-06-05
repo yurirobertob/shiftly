@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 // Lightweight proxy - does NOT import Auth.js or Prisma
 // Checks for session cookie directly to stay under Vercel Edge 1MB limit
 
-const protectedRoutes = ["/home", "/dashboard", "/app", "/settings", "/profile", "/colaboradores", "/servicos", "/relatorios", "/fechamento", "/unidades", "/clientes", "/conquistas"];
+const protectedRoutes = ["/home", "/dashboard", "/app", "/settings", "/profile", "/colaboradores", "/servicos", "/relatorios", "/fechamento", "/unidades", "/clientes", "/conquistas", "/onboarding"];
 const publicRoutes = ["/login", "/pricing"];
 
 function hasSessionCookie(request: NextRequest): boolean {
@@ -22,7 +22,18 @@ export function proxy(request: NextRequest) {
     if (hasSessionCookie(request)) {
       return NextResponse.redirect(new URL("/dashboard", request.url));
     }
-    return NextResponse.next();
+    const response = NextResponse.next();
+    // Set language cookie from Accept-Language header if not already set by user
+    if (!request.cookies.get("shiftsly-lang")) {
+      const acceptLang = request.headers.get("accept-language") ?? "";
+      const lang = acceptLang.toLowerCase().startsWith("pt") ? "pt" : "en";
+      response.cookies.set("shiftsly-lang", lang, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: "lax",
+      });
+    }
+    return response;
   }
 
   // Redirect /home to /dashboard (home uses mock data, dashboard has real data)

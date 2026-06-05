@@ -22,8 +22,7 @@ interface ActiveWeek {
 interface Payment {
   id: string;
   cleanerId: string;
-  cleanerName: string;
-  cleanerAvatar?: string | null;
+  cleaner: { id: string; name: string; avatarColor: string | null };
   totalHours: number;
   totalJobs: number;
   totalAbsences: number;
@@ -350,7 +349,8 @@ export default function FechamentoPage() {
           </thead>
           <tbody>
             {payments.map((p) => {
-              const initials = p.cleanerName
+              const cleanerName = p.cleaner?.name ?? "";
+              const initials = cleanerName
                 .split(" ")
                 .map((w) => w[0])
                 .join("")
@@ -361,25 +361,17 @@ export default function FechamentoPage() {
                 <tr key={p.cleanerId} className="border-t hover:bg-gray-50/50">
                   <td className="p-4">
                     <div className="flex items-center gap-2.5">
-                      {p.cleanerAvatar ? (
-                        <img
-                          src={p.cleanerAvatar}
-                          alt={p.cleanerName}
-                          className="h-8 w-8 rounded-full object-cover border border-gray-200"
-                        />
-                      ) : (
-                        <div
-                          className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"
-                          style={{
-                            backgroundColor: getAvatarColor(p.cleanerName).bg,
-                            color: getAvatarColor(p.cleanerName).text,
-                          }}
-                        >
-                          {initials}
-                        </div>
-                      )}
+                      <div
+                        className="h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{
+                          backgroundColor: getAvatarColor(cleanerName).bg,
+                          color: getAvatarColor(cleanerName).text,
+                        }}
+                      >
+                        {initials}
+                      </div>
                       <span className="font-medium text-gray-900">
-                        {p.cleanerName}
+                        {cleanerName}
                       </span>
                     </div>
                   </td>
